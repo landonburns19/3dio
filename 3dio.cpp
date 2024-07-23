@@ -15,8 +15,44 @@ void* acube(void* arg) {
 struct seedingstuff { 
   int detail;
   int oblique_or_passable;
-
+  int xspace;
+  int yspace;
+  int zspace;
 };
+
+
+
+class threadsafeclass {
+public:
+
+double ***mapply;
+void mapper(int xlx, int yly, int zlz){
+    double ***mapply = new double**[xlx];
+    for (int i = 0; i < xlx; ++i) {
+        mapply[i] = new double*[yly];
+        for (int j = 0; j < yly; ++j) {
+            mapply[i][j] = new double[zlz];
+        }
+    }
+    
+}
+
+
+
+void checkin(){
+
+mtx.lock();
+
+mtx.unlock();
+return;
+}
+
+
+
+private:
+mutex mtx;
+};
+
 
 
 int main() {
@@ -25,7 +61,14 @@ int main() {
     seedingstuff arg;
     arg.detail = 9;
     arg.oblique_or_passable = 1;
-     int result = pthread_create(&thread, NULL, asquare, (void*)&arg);
+    arg.xspace = 30;
+    arg.yspace = 30;
+    arg.zspace = 30;
+    threadsafeclass space1;
+    space1.mapper(arg.xspace, arg.yspace, arg.zspace);
+    
+    
+     int result = pthread_create(&thread, NULL, acube, (void*)&arg);
 
     if (result != 0) {
         fprintf(stderr, "Error creating thread: %d\n", result);
