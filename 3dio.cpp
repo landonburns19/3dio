@@ -5,12 +5,6 @@
 #include <pthread.h>
 using namespace std;
 
-void* acube(void* arg) {
-    int* num = (int*) arg;
-    printf("Hello from the thread! Argument passed: %d\n", *num);
-    return NULL;
-}
-
 
 struct seedingstuff { 
   int detail;
@@ -18,11 +12,36 @@ struct seedingstuff {
   int xspace;
   int yspace;
   int zspace;
+  double radius;
 };
 
 
 
-class threadsafeclass {
+
+
+
+
+
+void* cuber(void* arg) {
+   seedingstuff* newarg = static_cast<seedingstuff*>(arg);
+    cout << newarg -> radius;
+
+    
+
+    
+    return NULL;
+}
+
+
+
+
+
+
+
+
+
+
+class spaceobject {
 public:
 
 double ***mapply;
@@ -34,24 +53,40 @@ void mapper(int xlx, int yly, int zlz){
             mapply[i][j] = new double[zlz];
         }
     }
-    
+
+// mapply[5][5][5] = 5.5;
+
 }
 
 
+};
 
-void checkin(){
 
-mtx.lock();
+class observerpoint{
+public:
+observerpoint* next;
+double xlocation;
+double ylocation;
+double zlocation;
 
-mtx.unlock();
-return;
+void proximity_checkin(observerpoint* temp){
+    mtx.lock();
+if(next != nullptr){
+    mtx.unlock();
+    next -> proximity_checkin(temp); 
 }
-
-
+else{
+    next = temp;
+    mtx.unlock();
+    return;
+}
+}
 
 private:
 mutex mtx;
 };
+
+
 
 
 
@@ -61,14 +96,15 @@ int main() {
     seedingstuff arg;
     arg.detail = 9;
     arg.oblique_or_passable = 1;
-    arg.xspace = 30;
-    arg.yspace = 30;
-    arg.zspace = 30;
-    threadsafeclass space1;
+    arg.xspace = 100;
+    arg.yspace = 100;
+    arg.zspace = 10;
+    arg.radius = 3.0;
+    spaceobject space1;
     space1.mapper(arg.xspace, arg.yspace, arg.zspace);
     
     
-     int result = pthread_create(&thread, NULL, acube, (void*)&arg);
+     int result = pthread_create(&thread, NULL, cuber, (void*)&arg);
 
     if (result != 0) {
         fprintf(stderr, "Error creating thread: %d\n", result);
