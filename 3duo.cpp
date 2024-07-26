@@ -2,6 +2,7 @@
 #include <thread>
 #include <mutex>
 #include <pthread.h>
+#include <cmath>
 using namespace std;
 
 
@@ -9,10 +10,9 @@ using namespace std;
 class observerpoint{
 public:
 observerpoint* next = nullptr;
-observerpoint* root = nullptr;
-double xlocation = 0;
-double ylocation = 0;
-double zlocation = 0;
+double xlocation = -1.0;
+double ylocation = -1.0;
+double zlocation = -1.0;
 
 void proximity_checkin(observerpoint* temp){
     mtx.lock();
@@ -100,16 +100,41 @@ void mapper(int xlx, int yly, int zlz){
 
 
 void changepos_xyz(observerpoint* tempxyz, double newposx, double newposy, double newposz){
-    (tempxyz -> xlocation) = newposx;
-    (tempxyz -> ylocation) = newposy;
-    (tempxyz -> zlocation) = newposz;
+    
+    
+    if((tempxyz -> xlocation) == -1){
+        (tempxyz -> xlocation) = newposx;
+        (tempxyz -> ylocation) = newposy;
+        (tempxyz -> zlocation) = newposz;
 
-    int xbc = static_cast<int>(newposx);
-    int ybc = static_cast<int>(newposy);
-    int zbc = static_cast<int>(newposz);
+        int xbc = static_cast<int>(newposx);
+        int ybc = static_cast<int>(newposy);
+        int zbc = static_cast<int>(newposz);
 
+        mapply[xbc][ybc][zbc].proximity_checkin(tempxyz); 
+    }
+   else if((floor(tempxyz -> xlocation) != floor(newposx)) || (floor(tempxyz -> ylocation) != floor(newposy)) || (floor(tempxyz -> zlocation) != floor(newposz))){
+        
+        
+        
+        mapply[static_cast<int>(tempxyz -> xlocation)][static_cast<int>(tempxyz -> ylocation)][static_cast<int>(tempxyz -> ylocation)].proximity_checkOUT(tempxyz);
 
-    (tempxyz -> root) = &mapply[xbc][ybc][zbc];
+        (tempxyz -> xlocation) = newposx;
+        (tempxyz -> ylocation) = newposy;
+        (tempxyz -> zlocation) = newposz;
+
+        int xbc = static_cast<int>(newposx);
+        int ybc = static_cast<int>(newposy);
+        int zbc = static_cast<int>(newposz);
+
+        mapply[xbc][ybc][zbc].proximity_checkin(tempxyz); 
+    }
+    else{
+        (tempxyz -> xlocation) = newposx;
+        (tempxyz -> ylocation) = newposy;
+        (tempxyz -> zlocation) = newposz;
+    }
+     
     
     return;
 };
