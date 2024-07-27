@@ -3,6 +3,8 @@
 #include <mutex>
 #include <pthread.h>
 #include <cmath>
+#include <fstream>
+#include <stack>
 using namespace std;
 
 
@@ -10,6 +12,8 @@ using namespace std;
 class observerpoint{
 public:
 observerpoint* next = nullptr;
+observerpoint** shape_array = nullptr;
+int shape_array_size = 0;
 double xlocation = -1.0;
 double ylocation = -1.0;
 double zlocation = -1.0;
@@ -51,9 +55,17 @@ else{
 }
 }
 
+void change_shape_array(observerpoint* temp_shape_array[], int tempsize){
+
+    shape_array = temp_shape_array;
+    shape_array_size = tempsize;
+    return;
+
+}
 
 
 
+mutex pos;
 private:
 mutex mtx;
 };
@@ -67,6 +79,7 @@ observerpoint ***mapply;
 int xmap = 0;
 int ymap = 0;
 int zmap = 0;
+stack<observerpoint**> allshapes;
 
 void mapper(int xlx, int yly, int zlz){
     mapply = new observerpoint**[xlx];
@@ -103,25 +116,36 @@ void changepos_xyz(observerpoint* tempxyz, double newposx, double newposy, doubl
     
     
     if((tempxyz -> xlocation) == -1){
+
+        (tempxyz -> pos).lock();
         (tempxyz -> xlocation) = newposx;
         (tempxyz -> ylocation) = newposy;
         (tempxyz -> zlocation) = newposz;
+        (tempxyz -> pos).unlock();
+
 
         int xbc = static_cast<int>(newposx);
         int ybc = static_cast<int>(newposy);
         int zbc = static_cast<int>(newposz);
-
+        
         mapply[xbc][ybc][zbc].proximity_checkin(tempxyz); 
+
+
+
     }
    else if((floor(tempxyz -> xlocation) != floor(newposx)) || (floor(tempxyz -> ylocation) != floor(newposy)) || (floor(tempxyz -> zlocation) != floor(newposz))){
-        
-        
-        
-        mapply[static_cast<int>(tempxyz -> xlocation)][static_cast<int>(tempxyz -> ylocation)][static_cast<int>(tempxyz -> ylocation)].proximity_checkOUT(tempxyz);
 
+        int xth = static_cast<int>(tempxyz->xlocation);
+        int yth = static_cast<int>(tempxyz->ylocation);
+        int zth = static_cast<int>(tempxyz->zlocation);
+
+        mapply[xth][yth][zth].proximity_checkOUT(tempxyz);
+
+        (tempxyz -> pos).lock();
         (tempxyz -> xlocation) = newposx;
         (tempxyz -> ylocation) = newposy;
         (tempxyz -> zlocation) = newposz;
+        (tempxyz -> pos).unlock();
 
         int xbc = static_cast<int>(newposx);
         int ybc = static_cast<int>(newposy);
@@ -130,14 +154,63 @@ void changepos_xyz(observerpoint* tempxyz, double newposx, double newposy, doubl
         mapply[xbc][ybc][zbc].proximity_checkin(tempxyz); 
     }
     else{
+        (tempxyz -> pos).lock();
         (tempxyz -> xlocation) = newposx;
         (tempxyz -> ylocation) = newposy;
         (tempxyz -> zlocation) = newposz;
+        (tempxyz -> pos).unlock();
     }
      
     
     return;
 };
+
+
+void addtoshapestack(observerpoint* addingtostack[]){
+    allshapes.push(addingtostack);
+}
+
+void create_space_file(){
+    ofstream outfile("initializer.txt");
+
+    outfile << xmap << " " << ymap << " " << zmap << endl;
+
+    while (!allshapes.empty()) {
+        outfile << "next object" << endl;
+        for( int iy = 0; iy < (((allshapes.top())[0]) -> shape_array_size); ++iy){
+            
+            outfile << " " << (((allshapes.top())[iy]) -> xlocation) << " " << (((allshapes.top())[iy]) -> ylocation) << " " << (((allshapes.top())[iy]) -> zlocation) << endl;
+        }
+        allshapes.pop();
+    }
+
+
+// this code doesn't scale efficiently. change it so that looks for unique shape_array 's 
+/*
+    for (int i = 0; i < xmap; ++i) {
+        for (int j = 0; j < ymap; ++j) {
+            for (int l = 0; l < zmap; ++l) {
+                
+                if(mapply[i][j][l].next != nullptr){
+                    outfile << "list" << endl << i << " " << j << " " << l << endl;
+                    observerpoint* checkly = mapply[i][j][l].next;
+                    while(checkly != nullptr){
+                    outfile << checkly << endl;
+                        for(int al = 0; al < checkly -> shape_array_size; al++){
+                           outfile << (checkly -> shape_array)[al] << " ";
+                        }
+                        outfile << endl;
+                        checkly = checkly -> next;
+                    }
+                }
+                
+            }
+        }
+    }
+
+    */
+    outfile.close();
+}
 
 };
 
@@ -175,9 +248,29 @@ void* cuber(void* arg) {
     observerpoint* square6 = new observerpoint;
     observerpoint* square7 = new observerpoint;
     observerpoint* square8 = new observerpoint;
-    
+
+    observerpoint* connectedpoints[8];
+
+    connectedpoints[0] = square1;
+    connectedpoints[1] = square2;
+    connectedpoints[2] = square3;
+    connectedpoints[3] = square4;
+    connectedpoints[4] = square5;
+    connectedpoints[5] = square6;
+    connectedpoints[6] = square7;
+    connectedpoints[7] = square8;
+    newarg -> newspace -> addtoshapestack(connectedpoints);
+
+    square1->change_shape_array(connectedpoints, 8);
+    square2->change_shape_array(connectedpoints, 8);
+    square3->change_shape_array(connectedpoints, 8);
+    square4->change_shape_array(connectedpoints, 8);
+    square5->change_shape_array(connectedpoints, 8);
+    square6->change_shape_array(connectedpoints, 8);
+    square7->change_shape_array(connectedpoints, 8);
+    square8->change_shape_array(connectedpoints, 8);
    
-    newarg -> newspace -> changepos_xyz(square1, newarg -> xspace, newarg -> yspace, newarg -> zspace );
+    newarg -> newspace -> changepos_xyz(square1, newarg -> xspace, newarg -> yspace, newarg -> zspace);
     newarg -> newspace -> changepos_xyz(square2, ((newarg -> radius)+(newarg -> xspace)), newarg -> yspace, newarg -> zspace );
     newarg -> newspace -> changepos_xyz(square3, newarg -> xspace, ((newarg -> radius)+(newarg -> yspace)), newarg -> zspace );
     newarg -> newspace -> changepos_xyz(square4, ((newarg -> radius)+(newarg -> xspace)), ((newarg -> radius)+(newarg -> yspace)), newarg -> zspace );
@@ -186,18 +279,9 @@ void* cuber(void* arg) {
     newarg -> newspace -> changepos_xyz(square6, ((newarg -> radius)+(newarg -> xspace)), newarg -> yspace, ((newarg -> radius)+(newarg -> zspace)));
     newarg -> newspace -> changepos_xyz(square7, newarg -> xspace, ((newarg -> radius)+(newarg -> yspace)), ((newarg -> radius)+(newarg -> zspace)));
     newarg -> newspace -> changepos_xyz(square8, ((newarg -> radius)+(newarg -> xspace)), ((newarg -> radius)+(newarg -> yspace)), ((newarg -> radius)+(newarg -> zspace)) );
+    newarg -> newspace -> create_space_file();
 
-    /*
-     square1
-     square2;
-     square3;
-     square4;
-     square5;
-     square6;
-     square7;
-     square8;
-
-    */
+    
     return NULL;
 }
 
