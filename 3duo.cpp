@@ -80,6 +80,8 @@ int xmap = 0;
 int ymap = 0;
 int zmap = 0;
 stack<observerpoint**> allshapes;
+mutex thisone;
+mutex thatone;
 
 void mapper(int xlx, int yly, int zlz){
     mapply = new observerpoint**[xlx];
@@ -161,61 +163,39 @@ void changepos_xyz(observerpoint* tempxyz, double newposx, double newposy, doubl
         (tempxyz -> pos).unlock();
     }
      
-    
+    //cout << " " << (allshapes.top())[1] -> xlocation;
     return;
 };
 
 
 void addtoshapestack(observerpoint* addingtostack[]){
+    thisone.lock();
     allshapes.push(addingtostack);
+    thisone.unlock();
+    
 }
 
-void create_space_file(){
-    ofstream outfile("initializer.txt");
+void create_space_file(observerpoint* addingtoinitialize[], string shapename){
+    thatone.lock();
+    
+    ofstream outfile("initializer.txt", ios::app);
+    outfile << "nextobject " << shapename << endl;
 
-    outfile << xmap << " " << ymap << " " << zmap << endl;
-
-    while (!allshapes.empty()) {
-        outfile << "next object" << endl;
-        for( int iy = 0; iy < (((allshapes.top())[0]) -> shape_array_size); ++iy){
-            
-            outfile << " " << (((allshapes.top())[iy]) -> xlocation) << " " << (((allshapes.top())[iy]) -> ylocation) << " " << (((allshapes.top())[iy]) -> zlocation) << endl;
+      
+        for( int iy = 0; iy < (addingtoinitialize[0]) -> shape_array_size; ++iy){
+            outfile << " " << (addingtoinitialize[iy]) -> xlocation << " " << (addingtoinitialize[iy]) -> ylocation << " " << (addingtoinitialize[iy]) -> zlocation << endl;
         }
-        allshapes.pop();
-    }
+         
 
 
-// this code doesn't scale efficiently. change it so that looks for unique shape_array 's 
-/*
-    for (int i = 0; i < xmap; ++i) {
-        for (int j = 0; j < ymap; ++j) {
-            for (int l = 0; l < zmap; ++l) {
-                
-                if(mapply[i][j][l].next != nullptr){
-                    outfile << "list" << endl << i << " " << j << " " << l << endl;
-                    observerpoint* checkly = mapply[i][j][l].next;
-                    while(checkly != nullptr){
-                    outfile << checkly << endl;
-                        for(int al = 0; al < checkly -> shape_array_size; al++){
-                           outfile << (checkly -> shape_array)[al] << " ";
-                        }
-                        outfile << endl;
-                        checkly = checkly -> next;
-                    }
-                }
-                
-            }
-        }
-    }
-
-    */
     outfile.close();
+    thatone.unlock();
 }
 
 };
 
 
-
+//void create_space_file(){}
 
 
 
@@ -239,7 +219,7 @@ struct seedingstuff {
 
 void* cuber(void* arg) {
    seedingstuff* newarg = static_cast<seedingstuff*>(arg);
-    bool exiter = true;
+    string nameof = "cube";
     observerpoint* square1 = new observerpoint;
     observerpoint* square2 = new observerpoint;
     observerpoint* square3 = new observerpoint;
@@ -274,13 +254,13 @@ void* cuber(void* arg) {
     newarg -> newspace -> changepos_xyz(square2, ((newarg -> radius)+(newarg -> xspace)), newarg -> yspace, newarg -> zspace );
     newarg -> newspace -> changepos_xyz(square3, newarg -> xspace, ((newarg -> radius)+(newarg -> yspace)), newarg -> zspace );
     newarg -> newspace -> changepos_xyz(square4, ((newarg -> radius)+(newarg -> xspace)), ((newarg -> radius)+(newarg -> yspace)), newarg -> zspace );
-    
+
     newarg -> newspace -> changepos_xyz(square5, newarg -> xspace, newarg -> yspace, ((newarg -> radius)+(newarg -> zspace)) );
     newarg -> newspace -> changepos_xyz(square6, ((newarg -> radius)+(newarg -> xspace)), newarg -> yspace, ((newarg -> radius)+(newarg -> zspace)));
     newarg -> newspace -> changepos_xyz(square7, newarg -> xspace, ((newarg -> radius)+(newarg -> yspace)), ((newarg -> radius)+(newarg -> zspace)));
     newarg -> newspace -> changepos_xyz(square8, ((newarg -> radius)+(newarg -> xspace)), ((newarg -> radius)+(newarg -> yspace)), ((newarg -> radius)+(newarg -> zspace)) );
-    newarg -> newspace -> create_space_file();
-
+    newarg -> newspace -> create_space_file(connectedpoints, nameof);
+    
     
     return NULL;
 }
@@ -296,34 +276,45 @@ void* cuber(void* arg) {
 
 
 int main() {
-    /* mapobject newspace;
-    observerpoint testly2;
-    newspace.mapper(100, 100, 30);
-    observerpoint* testly = new observerpoint;
-    testly2.proximity_checkin(testly);
-    newspace.changepos_x(testly, 10.1);
-    testly2.proximity_checkOUT(testly);
-    */
+
 
     pthread_t thread;
     seedingstuff arg;
+    pthread_t thread2;
+    seedingstuff arg2;
+
     arg.detail = 9;
     arg.oblique_or_passable = 1;
     arg.xspace = 50;
     arg.yspace = 40;
     arg.zspace = 10;
     arg.radius = 3.0;
+
+    arg2.detail = 9;
+    arg2.oblique_or_passable = 1;
+    arg2.xspace = 20;
+    arg2.yspace = 20;
+    arg2.zspace = 10;
+    arg2.radius = 4.0;
     
     int mapx = 100;
     int mapy = 100;
     int mapz = 30;
 
-    arg.newspace = new mapobject;
-    arg.newspace -> mapper(mapx, mapy, mapz);
-    pthread_create(&thread, NULL, cuber, (void*)&arg);
-    pthread_join(thread, NULL); 
-    
+    mapobject* space1 = new mapobject;
+    space1 -> mapper(mapx, mapy, mapz);
+    arg.newspace = space1;
+    arg2.newspace = space1;
 
+    ofstream outfile("initializer.txt", ios::app);
+    outfile << mapx << " " << mapy << " " << mapz << endl;
+
+    pthread_create(&thread, NULL, cuber, (void*)&arg);
+    pthread_create(&thread2, NULL, cuber, (void*)&arg2);
+    pthread_join(thread, NULL); 
+    pthread_join(thread2, NULL); 
+
+  
 
     return 0;
 }
