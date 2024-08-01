@@ -195,7 +195,7 @@ void create_space_file(observerpoint* addingtoinitialize[], string shapename){
 };
 
 
-//void create_space_file(){}
+
 
 
 
