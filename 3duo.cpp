@@ -5,6 +5,8 @@
 #include <cmath>
 #include <fstream>
 #include <stack>
+
+
 using namespace std;
 
 
@@ -192,6 +194,49 @@ void create_space_file(observerpoint* addingtoinitialize[], string shapename){
     thatone.unlock();
 }
 
+
+void create_bmp_file(observerpoint* addingtoinitialize[]){
+
+    double distancer = 2;
+    double by = 0;
+    double bz= 0;
+    double bx= 0;
+            double mg3x = (((addingtoinitialize[0]) -> xlocation) - bx);
+            double mg3y = (((addingtoinitialize[0]) -> ylocation) - by);
+            double mg3z = (((addingtoinitialize[0]) -> zlocation) - bz);
+            double mag3 = sqrt((mg3x*mg3x)+(mg3y*mg3y)+(mg3z*mg3z));
+    
+    
+
+    
+    for( int iy = 1; iy < (addingtoinitialize[0]) -> shape_array_size; ++iy){
+            double dotproductive = ((((addingtoinitialize[0]) -> xlocation) - bx) * (((addingtoinitialize[iy]) -> xlocation) - bx)) + ((((addingtoinitialize[0]) -> ylocation) - by) * (((addingtoinitialize[iy]) -> ylocation) - by)) + ((((addingtoinitialize[0]) -> zlocation) - bz) * (((addingtoinitialize[iy]) -> zlocation) - bz));
+
+            double mg1x = (((addingtoinitialize[0]) -> xlocation) - bx);
+            double mg1y = (((addingtoinitialize[0]) -> ylocation) - by);
+            double mg1z = (((addingtoinitialize[0]) -> zlocation) - bz);
+
+            double mg2x = (((addingtoinitialize[iy]) -> xlocation) - bx);
+            double mg2y = (((addingtoinitialize[iy]) -> ylocation) - by);
+            double mg2z = (((addingtoinitialize[iy]) -> zlocation) - bz);
+
+            double mag1 = sqrt((mg1x*mg1x)+(mg1y*mg1y)+(mg1z*mg1z));
+            double mag2 = sqrt((mg2x*mg2x)+(mg2y*mg2y)+(mg2z*mg2z));
+            cout << acos(dotproductive/(mag1 * mag2));
+            theta1 = acos(dotproductive/(mag1 * mag2));
+
+            double hypot = (cos(theta1) * (mag3/distancer));
+            double scaler = hypot/mag2;
+            mg4x = mg2x * (scaler);
+            mg4y = mg2y * (scaler);
+            mg4z = mg2z * (scaler);
+
+            //what would make the base line aligned with an axis? Then apply those constraints to the second
+
+
+        }
+}
+
 };
 
 
@@ -260,7 +305,7 @@ void* cuber(void* arg) {
     newarg -> newspace -> changepos_xyz(square7, newarg -> xspace, ((newarg -> radius)+(newarg -> yspace)), ((newarg -> radius)+(newarg -> zspace)));
     newarg -> newspace -> changepos_xyz(square8, ((newarg -> radius)+(newarg -> xspace)), ((newarg -> radius)+(newarg -> yspace)), ((newarg -> radius)+(newarg -> zspace)) );
     newarg -> newspace -> create_space_file(connectedpoints, nameof);
-    
+    newarg -> newspace -> create_bmp_file(connectedpoints);
     
     return NULL;
 }
