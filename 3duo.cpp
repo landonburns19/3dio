@@ -197,44 +197,81 @@ void create_space_file(observerpoint* addingtoinitialize[], string shapename){
 
 void create_bmp_file(observerpoint* addingtoinitialize[]){
 
-    double distancer = 2;
-    double by = 0;
-    double bz= 0;
-    double bx= 0;
-            double mg3x = (((addingtoinitialize[0]) -> xlocation) - bx);
-            double mg3y = (((addingtoinitialize[0]) -> ylocation) - by);
-            double mg3z = (((addingtoinitialize[0]) -> zlocation) - bz);
-            double mag3 = sqrt((mg3x*mg3x)+(mg3y*mg3y)+(mg3z*mg3z));
-    
-    
 
+    double object_coordinatesx[((addingtoinitialize[0]) -> shape_array_size)];
+    double object_coordinatesy[((addingtoinitialize[0]) -> shape_array_size)];
+    double object_coordinatesz[((addingtoinitialize[0]) -> shape_array_size)];
+
+    double mg1x = (((addingtoinitialize[0]) -> xlocation));
+    double mg1y = (((addingtoinitialize[0]) -> ylocation));
+    double mg1z = (((addingtoinitialize[0]) -> zlocation));
     
+    //slider
+    double mg3x = (((addingtoinitialize[0]) -> xlocation))/2;
+    double mg3y = (((addingtoinitialize[0]) -> ylocation))/2;
+    double mg3z = (((addingtoinitialize[0]) -> zlocation))/2;
+
+    object_coordinatesx[0] = mg3x;
+    object_coordinatesy[0] = mg3y;
+    object_coordinatesz[0] = mg3z;
+
     for( int iy = 1; iy < (addingtoinitialize[0]) -> shape_array_size; ++iy){
-            double dotproductive = ((((addingtoinitialize[0]) -> xlocation) - bx) * (((addingtoinitialize[iy]) -> xlocation) - bx)) + ((((addingtoinitialize[0]) -> ylocation) - by) * (((addingtoinitialize[iy]) -> ylocation) - by)) + ((((addingtoinitialize[0]) -> zlocation) - bz) * (((addingtoinitialize[iy]) -> zlocation) - bz));
+            
 
-            double mg1x = (((addingtoinitialize[0]) -> xlocation) - bx);
-            double mg1y = (((addingtoinitialize[0]) -> ylocation) - by);
-            double mg1z = (((addingtoinitialize[0]) -> zlocation) - bz);
+            double mg2x = (((addingtoinitialize[iy]) -> xlocation));
+            double mg2y = (((addingtoinitialize[iy]) -> ylocation));
+            double mg2z = (((addingtoinitialize[iy]) -> zlocation));
 
-            double mg2x = (((addingtoinitialize[iy]) -> xlocation) - bx);
-            double mg2y = (((addingtoinitialize[iy]) -> ylocation) - by);
-            double mg2z = (((addingtoinitialize[iy]) -> zlocation) - bz);
-
-            double mag1 = sqrt((mg1x*mg1x)+(mg1y*mg1y)+(mg1z*mg1z));
-            double mag2 = sqrt((mg2x*mg2x)+(mg2y*mg2y)+(mg2z*mg2z));
-            cout << acos(dotproductive/(mag1 * mag2));
-            theta1 = acos(dotproductive/(mag1 * mag2));
-
-            double hypot = (cos(theta1) * (mag3/distancer));
-            double scaler = hypot/mag2;
-            mg4x = mg2x * (scaler);
-            mg4y = mg2y * (scaler);
-            mg4z = mg2z * (scaler);
-
-            //what would make the base line aligned with an axis? Then apply those constraints to the second
+            double thisconstant = (mg3x * mg3x) + (mg3y * mg3y) + (mg3z * mg3z);
+            double koef = thisconstant / ((mg3x * mg2x) + (mg3y * mg2y) + (mg3z * mg2z));
+            
+              
+            object_coordinatesx[iy] = koef * mg2x;
+            object_coordinatesy[iy] = koef * mg2y;
+            object_coordinatesz[iy] = koef * mg2z;
+            
 
 
-        }
+        } 
+
+    double axis1x = object_coordinatesx[1] - object_coordinatesx[0];
+    double axis1y = object_coordinatesy[1] - object_coordinatesy[0];
+    double axis1z = object_coordinatesz[1] - object_coordinatesz[0];
+
+
+// ix      jy       kz
+// mg3x    mg3y    mg3z
+// axis1x axis1y axis1z
+
+
+    double ix = (mg3y * axis1z) - (mg3z * axis1y);
+    double jy = (mg3x * axis1z) - (mg3z * axis1x);
+    double kz = (mg3x * axis1y) - (mg3y * axis1x);
+
+    double axis1multix = sqrt((axis1x * axis1x) + (axis1y * axis1y) + (axis1z * axis1z));
+    double axis2multiy = sqrt((ix * ix) + (jy * jy) + (kz * kz));
+
+    double finalx[((addingtoinitialize[0]) -> shape_array_size)];
+    double finaly[((addingtoinitialize[0]) -> shape_array_size)];
+
+    finalx[0] = 0;
+    finaly[0] = 0;
+
+    for( int ic = 1; ic < (addingtoinitialize[0]) -> shape_array_size; ++ic){
+
+        double icx = object_coordinatesx[ic] - object_coordinatesx[0];
+        double icy = object_coordinatesy[ic] - object_coordinatesy[0];
+        double icz = object_coordinatesz[ic] - object_coordinatesz[0];
+
+        finalx[ic] = ((axis1x * icx) + (axis1y * icy) + (axis1z * icz)) / axis1multix;
+        finaly[ic] = ((ix * icx) + (jy * icy) + (kz * icz)) / axis2multiy;
+        cout << finalx[ic];
+        cout << " ";
+        cout << finaly[ic];
+
+    }
+
+
 }
 
 };
