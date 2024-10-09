@@ -5,6 +5,9 @@
 #include <cmath>
 #include <fstream>
 #include <stack>
+#include <vector>
+#include <cstdint>
+
 
 
 using namespace std;
@@ -265,11 +268,164 @@ void create_bmp_file(observerpoint* addingtoinitialize[]){
 
         finalx[ic] = ((axis1x * icx) + (axis1y * icy) + (axis1z * icz)) / axis1multix;
         finaly[ic] = ((ix * icx) + (jy * icy) + (kz * icz)) / axis2multiy;
-        cout << finalx[ic];
+        cout << "x" << ic << " " << finalx[ic];
         cout << " ";
-        cout << finaly[ic];
+        cout << "y" << ic << " " << finaly[ic] << endl;
 
     }
+        
+        double least_x = 0;
+        double least_y = 0;
+        double most_x = 0;
+        double most_y = 0;
+        double most_x_pos = 0;
+        double most_y_pos = 0;
+        double the_mostest;
+        int pixrad = 100;
+
+        for(int ib = 0; ib < (addingtoinitialize[0]) -> shape_array_size; ++ib){
+            if(finalx[ib] < least_x){
+                least_x = finalx[ib];
+                //cout << finalx[ib];
+                //cout << least_x;
+            }
+            if(finalx[ib] > most_x){
+                most_x = finalx[ib];
+                most_x_pos = ib;
+            }
+        }
+        least_x = abs(least_x);
+        most_x = most_x + least_x;
+
+        for( int ia = 0; ia < (addingtoinitialize[0]) -> shape_array_size; ++ia){
+            if(finaly[ia] < least_y){
+                least_y = finaly[ia];
+            }
+            if(finaly[ia] > most_y){
+                most_y = finaly[ia];
+                most_y_pos = ia;
+            }
+        }
+
+        
+        least_y = abs(least_y);
+        most_y = most_y + least_y;
+
+        if(most_y > most_x){
+            the_mostest = most_y;
+        }
+        else if(most_x > most_y){
+            the_mostest = most_x;
+        }
+        
+        cout << "the_mostest " << the_mostest << endl;
+        cout << "leastx" << least_x << endl;
+        cout << "leasty" << least_y << endl;
+        cout << "mostx " << most_x << endl;
+        cout << "mosty " << most_y << endl;
+        cout << "most_x_pos " << most_x_pos << endl;
+        cout << "most_y_pos " << most_y_pos << endl;
+
+        for( int ig = 0; ig < (addingtoinitialize[0]) -> shape_array_size; ++ig){
+            finalx[ig] = finalx[ig] + least_x;
+            finaly[ig] = finaly[ig] + least_y;
+            cout << "xfinaltranslated" << finalx[ig] << endl;
+            cout << "yfinaltranslated" << finaly[ig] << endl;
+        }
+
+        for( int ig = 0; ig < (addingtoinitialize[0]) -> shape_array_size; ++ig){
+
+            cout << finalx[ig] << " ";
+            cout << finaly[ig] << endl;
+        }
+
+        for( int im = 0; im < (addingtoinitialize[0]) -> shape_array_size; ++im){
+
+            finalx[im] = ceil(100 * (finalx[im] / the_mostest)); 
+            finaly[im] = ceil(100 * (finaly[im] / the_mostest));
+            //this 99 rule will only work for this object code. When you have multiple objects, you will need to exclude 
+            if(finalx[im] > 99){
+                finalx[im] = 99;
+            }
+
+            if(finaly[im] > 99){
+                finaly[im] = 99;
+            }
+
+            cout << " x" << finalx[im];
+            cout << " y" << finaly[im] << endl;
+        }
+            
+//be aware that the divider MIGHT be producing in a range of 101 possible numbers BUT probably not
+
+
+#pragma pack(push, 1)
+
+
+struct BMPFileHeader {
+    uint16_t fileType{0x4D42};  
+    uint32_t fileSize{30054};   // Size of the file (header + info + pixel data)
+    uint16_t reserved1{0};      
+    uint16_t reserved2{0};      
+    uint32_t offsetData{54};    // Start position of pixel data (54 bytes after file & info headers)
+};
+
+struct BMPInfoHeader {
+    uint32_t size{40};          // Size of this header (40 bytes)
+    int32_t width{100};         // Width of the bitmap in pixels (100)
+    int32_t height{100};        // Height of the bitmap in pixels (100)
+    uint16_t planes{1};         
+    uint16_t bitCount{24};      // Bits per pixel (24 for RGB)
+    uint32_t compression{0};    
+    uint32_t sizeImage{30000};  // Size of the pixel data (100 * 100 * 3 bytes for RGB)
+    int32_t xPixelsPerMeter{0}; 
+    int32_t yPixelsPerMeter{0}; 
+    uint32_t colorsUsed{0};     
+    uint32_t colorsImportant{0};
+};
+#pragma pack(pop)
+
+    BMPFileHeader fileHeader;
+    BMPInfoHeader infoHeader;
+    fileHeader.fileSize = sizeof(BMPFileHeader) + sizeof(BMPInfoHeader) + infoHeader.sizeImage;
+    string filename = "output.bmp";
+
+        ofstream file(filename, std::ios::out | std::ios::binary);
+    if (!file) {
+        cerr << "Error creating file!" << endl;
+        return;
+    }
+
+    
+    file.write(reinterpret_cast<char*>(&fileHeader), sizeof(BMPFileHeader));
+
+    
+    file.write(reinterpret_cast<char*>(&infoHeader), sizeof(BMPInfoHeader));
+
+ 
+    vector<uint8_t> pixelData(infoHeader.sizeImage, 255); // Initialize with white pixels
+
+    for( int ik = 0; ik < (addingtoinitialize[0]) -> shape_array_size; ++ik){
+        int pixelIndex = (finaly[ik] * 100 + finalx[ik]) * 3;
+        pixelData[pixelIndex] = 0;      // Red
+        pixelData[pixelIndex + 1] = 0;  // Green
+        pixelData[pixelIndex + 2] = 0;  // Blue
+    }
+
+
+
+
+
+    
+    file.write(reinterpret_cast<char*>(pixelData.data()), pixelData.size());
+
+    
+    file.close();
+    
+
+
+
+
 
 
 }
@@ -392,9 +548,9 @@ int main() {
     outfile << mapx << " " << mapy << " " << mapz << endl;
 
     pthread_create(&thread, NULL, cuber, (void*)&arg);
-    pthread_create(&thread2, NULL, cuber, (void*)&arg2);
+    //pthread_create(&thread2, NULL, cuber, (void*)&arg2);
     pthread_join(thread, NULL); 
-    pthread_join(thread2, NULL); 
+    //pthread_join(thread2, NULL); 
 
   
 
