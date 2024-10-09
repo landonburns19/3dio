@@ -13,16 +13,20 @@
 using namespace std;
 
 
-
+//Observer points are used for two things. It forms a gridlike map onto which a linked of list of nearby points can be checked in to observerpoint* next. 
+//The purpose of this is to facilitate multithreading.
 class observerpoint{
 public:
-observerpoint* next = nullptr;
-observerpoint** shape_array = nullptr;
-int shape_array_size = 0;
+observerpoint* next = nullptr; //this can lead to other points that are "checked in"
+observerpoint** shape_array = nullptr; //this can lead to other points in the shape.
+int shape_array_size = 0; // this holds the amount of points in the shape
+
+//location information
 double xlocation = -1.0;
 double ylocation = -1.0;
 double zlocation = -1.0;
 
+//this is some mutex stuff
 void proximity_checkin(observerpoint* temp){
     mtx.lock();
 if(next != nullptr){
@@ -88,6 +92,7 @@ stack<observerpoint**> allshapes;
 mutex thisone;
 mutex thatone;
 
+// this initializes the 3D space in which the program executes. It is a 3D array of observerpoints
 void mapper(int xlx, int yly, int zlz){
     mapply = new observerpoint**[xlx];
     xmap = xlx;
@@ -118,10 +123,10 @@ void mapper(int xlx, int yly, int zlz){
 
 
 
-
+//this function is made to change the location information of a particular observer point.
 void changepos_xyz(observerpoint* tempxyz, double newposx, double newposy, double newposz){
     
-    
+    //all location information is positive. A negative value means uninitialized.
     if((tempxyz -> xlocation) == -1){
 
         (tempxyz -> pos).lock();
@@ -140,6 +145,15 @@ void changepos_xyz(observerpoint* tempxyz, double newposx, double newposy, doubl
 
 
     }
+    //One oberserver point is equal to a value of one in the position. If the change in position to a shape's observerpoint results in a new whole value, it will switch observerpoints from the map.
+    //
+    //In other words:
+    //If x = 12.11 and .23 gets added to it
+    //Then there is no call to checkOUT
+    //
+    //However:
+    //If x = 12.11 and .89 gets added to it
+    //Then the observerpoint gets moved to the bottom of the linked list coresponding to mapply[13][y][z]
    else if((floor(tempxyz -> xlocation) != floor(newposx)) || (floor(tempxyz -> ylocation) != floor(newposy)) || (floor(tempxyz -> zlocation) != floor(newposz))){
 
         int xth = static_cast<int>(tempxyz->xlocation);
@@ -180,6 +194,7 @@ void addtoshapestack(observerpoint* addingtostack[]){
     
 }
 
+//This converts a shape into text information by cycling through the shape's array and referencing the location of its observerpoints.
 void create_space_file(observerpoint* addingtoinitialize[], string shapename){
     thatone.lock();
     
@@ -197,7 +212,7 @@ void create_space_file(observerpoint* addingtoinitialize[], string shapename){
     thatone.unlock();
 }
 
-
+//This is a simple create bmpfile for projecting a single shape from a single angle. It will be expanded to show multiple shapes from any angle and position.
 void create_bmp_file(observerpoint* addingtoinitialize[]){
 
 
@@ -241,7 +256,7 @@ void create_bmp_file(observerpoint* addingtoinitialize[]){
     double axis1y = object_coordinatesy[1] - object_coordinatesy[0];
     double axis1z = object_coordinatesz[1] - object_coordinatesz[0];
 
-
+//Matrix
 // ix      jy       kz
 // mg3x    mg3y    mg3z
 // axis1x axis1y axis1z
@@ -317,7 +332,7 @@ void create_bmp_file(observerpoint* addingtoinitialize[]){
         else if(most_x > most_y){
             the_mostest = most_x;
         }
-        
+        //algebra stuff
         cout << "the_mostest " << the_mostest << endl;
         cout << "leastx" << least_x << endl;
         cout << "leasty" << least_y << endl;
@@ -343,7 +358,7 @@ void create_bmp_file(observerpoint* addingtoinitialize[]){
 
             finalx[im] = ceil(100 * (finalx[im] / the_mostest)); 
             finaly[im] = ceil(100 * (finaly[im] / the_mostest));
-            //this 99 rule will only work for this object code. When you have multiple objects, you will need to exclude 
+            //this 99 rule will only work for this object code. When I have multiple objects, I will need to exclude points.
             if(finalx[im] > 99){
                 finalx[im] = 99;
             }
@@ -356,7 +371,7 @@ void create_bmp_file(observerpoint* addingtoinitialize[]){
             cout << " y" << finaly[im] << endl;
         }
             
-//be aware that the divider MIGHT be producing in a range of 101 possible numbers BUT probably not
+//be aware that the divider MIGHT be producing in a range of 101 possible numbers BUT its probably not
 
 
 #pragma pack(push, 1)
@@ -442,19 +457,19 @@ struct BMPInfoHeader {
 
 
 
-
+//This contains some basic intializtion info for main()
 struct seedingstuff { 
-  int detail;
-  int oblique_or_passable;
-  double xspace;
+  int detail; //Not used
+  int oblique_or_passable; //Not used
+  double xspace; //size of the created space
   double yspace;
   double zspace;
   double radius;
-  mapobject* newspace;
+  mapobject* newspace; //reference to the space created
 };
 
 
-
+//thread for intilizing a cube shape. In the future there will be more threads for more shapes, and they will perform some state changes (Ex. like kinematics or deletion). All of that will be managed from functions like these.
 void* cuber(void* arg) {
    seedingstuff* newarg = static_cast<seedingstuff*>(arg);
     string nameof = "cube";
@@ -497,8 +512,9 @@ void* cuber(void* arg) {
     newarg -> newspace -> changepos_xyz(square6, ((newarg -> radius)+(newarg -> xspace)), newarg -> yspace, ((newarg -> radius)+(newarg -> zspace)));
     newarg -> newspace -> changepos_xyz(square7, newarg -> xspace, ((newarg -> radius)+(newarg -> yspace)), ((newarg -> radius)+(newarg -> zspace)));
     newarg -> newspace -> changepos_xyz(square8, ((newarg -> radius)+(newarg -> xspace)), ((newarg -> radius)+(newarg -> yspace)), ((newarg -> radius)+(newarg -> zspace)) );
-    newarg -> newspace -> create_space_file(connectedpoints, nameof);
-    newarg -> newspace -> create_bmp_file(connectedpoints);
+
+    newarg -> newspace -> create_space_file(connectedpoints, nameof); //This records the records the shapes information
+    newarg -> newspace -> create_bmp_file(connectedpoints); //This creates the bmp file. 
     
     return NULL;
 }
@@ -511,7 +527,7 @@ void* cuber(void* arg) {
 
 
 
-
+//This is a messy initialization. It will be streamlined to handle user inputs.
 
 int main() {
 
