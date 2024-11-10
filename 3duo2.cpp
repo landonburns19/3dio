@@ -483,8 +483,12 @@ return NULL;
 
 int pointfinder(int renderi, double pos, double vec){
 
-    return static_cast<int>((renderi * vec) + pos);
+    
+    return static_cast<int>(ceil((renderi * vec) + pos));
 }
+
+
+
 
 
 
@@ -496,15 +500,16 @@ void* projection_thread(void* arg){
     double yvec = newarg -> ypos - newarg -> y_base;
     double zvec = newarg -> zpos - newarg -> z_base;
 
-    double search_xvec_hypo = (xvec * xvec) + (yvec * yvec) + (zvec * zvec);
-    double search_xvec = (xvec) / search_xvec_hypo;
-    double search_yvec = (yvec) / search_xvec_hypo;
-    double search_zvec = (zvec) / search_xvec_hypo;
+    double search_vec_hypo = sqrt((xvec * xvec) + (yvec * yvec) + (zvec * zvec)); //don't forget squrt
+    double search_xvec = (xvec) / search_vec_hypo;
+    double search_yvec = (yvec) / search_vec_hypo;
+    double search_zvec = (zvec) / search_vec_hypo;
     
     double renderx = (search_xvec * (newarg -> render_distance_multipliar));
     double rendery = (search_yvec * (newarg -> render_distance_multipliar));
     double renderz = (search_zvec * (newarg -> render_distance_multipliar));
-    double render_hypo = (renderx * renderx) + (rendery * rendery) + (renderz * renderz);
+    double render_hypo = sqrt((renderx * renderx) + (rendery * rendery) + (renderz * renderz));
+    //cout << render_hypo;
     int render_hypo2 = static_cast<int>(round(render_hypo));
 
 
@@ -528,6 +533,7 @@ void* projection_thread(void* arg){
     max_up_orvecx = max_up_orvecx / max_up_hypo;
     max_up_orvecy = max_up_orvecy / max_up_hypo;
     max_up_orvecz = max_up_orvecz / max_up_hypo;
+    
 
     double max_down_posx = (newarg -> xpos) - (newarg -> xdirvec * newarg -> window_height);
     double max_down_posy = (newarg -> ypos) - (newarg -> ydirvec * newarg -> window_height);
@@ -588,24 +594,80 @@ void* projection_thread(void* arg){
     int ytemp_max_right;
     int ztemp_max_right;
 
-    for(int i = 0; i < render_hypo2; i++){
+    int i = 0;
+
+    do{
+
         xtemp_max_up = pointfinder(i, max_up_posx, max_up_orvecx);
         ytemp_max_up = pointfinder(i, max_up_posy, max_up_orvecy);
         ztemp_max_up = pointfinder(i, max_up_posz, max_up_orvecz);
+        cout << endl << "maxup" << endl << xtemp_max_up << endl << ytemp_max_up << endl << ztemp_max_up;
 
         xtemp_max_down = pointfinder(i, max_down_posx, max_down_orvecx);
         ytemp_max_down = pointfinder(i, max_down_posy, max_down_orvecy);
         ztemp_max_down = pointfinder(i, max_down_posz, max_down_orvecz);
+        cout << endl << "maxdown" << endl << xtemp_max_down << endl << ytemp_max_down << endl << ztemp_max_down;
 
         xtemp_max_left = pointfinder(i, max_left_posx, max_left_orvecx);
         ytemp_max_left = pointfinder(i, max_left_posy, max_left_orvecy);
         ztemp_max_left = pointfinder(i, max_left_posz, max_left_orvecz);
+        cout << endl << "maxleft" << endl << xtemp_max_left << endl << ytemp_max_left << endl << ztemp_max_left;
 
         xtemp_max_right = pointfinder(i, max_right_posx, max_right_orvecx);
         ytemp_max_right = pointfinder(i, max_right_posy, max_right_orvecy);
         ztemp_max_right = pointfinder(i, max_right_posz, max_right_orvecz);
+        cout << endl << "maxright" << endl << xtemp_max_right << endl << ytemp_max_right << endl << ztemp_max_right << endl;
+        
 
-    }
+        
+        double seekervec1_x = (xtemp_max_up - xtemp_max_down);
+        double seekervec1_y = (ytemp_max_up - ytemp_max_down);
+        double seekervec1_z = (ztemp_max_up - ztemp_max_down);
+        double seekervec1_mag = sqrt((seekervec1_x * seekervec1_x) + (seekervec1_y * seekervec1_y) + (seekervec1_z * seekervec1_z));
+
+        double seekervec2_x = (xtemp_max_right - xtemp_max_left);
+        double seekervec2_y = (ytemp_max_right - ytemp_max_left);
+        double seekervec2_z = (ztemp_max_right - ztemp_max_left);
+        double seekervec2_mag = sqrt((seekervec2_x * seekervec2_x) + (seekervec2_y * seekervec2_y) + (seekervec2_z * seekervec2_z));
+
+        
+        double xstarterpoint = xtemp_max_left - (seekervec1_x / 2);
+        double ystarterpoint = ytemp_max_left - (seekervec1_y / 2);
+        double zstarterpoint = ztemp_max_left - (seekervec1_z / 2);
+
+
+        int seekervec2_mag_int = static_cast<int>(ceil(seekervec2_mag));
+        double seekervec2_x_dir = seekervec2_x / seekervec2_mag;
+        double seekervec2_y_dir = seekervec2_y / seekervec2_mag;
+        double seekervec2_z_dir = seekervec2_z / seekervec2_mag;
+
+        int seekervec1_mag_int = static_cast<int>(ceil(seekervec1_mag));
+        double seekervec1_x_dir = seekervec1_x / seekervec1_mag;
+        double seekervec1_y_dir = seekervec1_y / seekervec1_mag;
+        double seekervec1_z_dir = seekervec1_z / seekervec1_mag;
+
+        for(int j = 0; j < seekervec2_mag_int; j++){
+            double seeker_temposx = (seekervec2_x_dir * j) + xstarterpoint;
+            double seeker_temposy = (seekervec2_y_dir * j) + ystarterpoint;
+            double seeker_temposz = (seekervec2_z_dir * j) + zstarterpoint;
+            for(int td = 0; td < seekervec1_mag_int; td++){
+                double seeker_temposx2 = ceil((seekervec1_x_dir * td) + seeker_temposx);
+                double seeker_temposy2 = ceil((seekervec1_y_dir * td) + seeker_temposy);
+                double seeker_temposz2 = ceil((seekervec1_z_dir * td) + seeker_temposz);
+                cout << "d";
+
+            }
+            cout << endl;
+        }
+cout << endl << endl;
+        
+
+
+
+
+
+    i++;
+    }while(i < render_hypo2);
  
 
 return NULL;
@@ -689,7 +751,7 @@ int main() {
     pthread_t thread4;
     projection_stuff viewpoint1;
     viewpoint1.space_info = space1_seeder;
-    viewpoint1.render_distance_multipliar = 2;
+    viewpoint1.render_distance_multipliar = 30;
 
     viewpoint1.xpos = 50;
     viewpoint1.ypos = 45;
@@ -698,8 +760,8 @@ int main() {
     viewpoint1.x_base = 40;
     viewpoint1.y_base = 42.3;
     viewpoint1.z_base = 43;
-    viewpoint1.window_length = 5;
-    viewpoint1.window_height = 4;
+    viewpoint1.window_length = 4;
+    viewpoint1.window_height = 8;
 
 
 
