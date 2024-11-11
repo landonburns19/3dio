@@ -490,10 +490,16 @@ int pointfinder(int renderi, double pos, double vec){
 
 
 
-
+class shaped_objects{
+    public:
+    observerpoint* pointed_at;
+    shaped_objects* thenext;
+};
 
 void* projection_thread(void* arg){
     projection_stuff* newarg = static_cast<projection_stuff*>(arg);
+    shaped_objects* thestart = new shaped_objects;
+    shaped_objects* theend = thestart;
     
     //find relevent observerpoints
     double xvec = newarg -> xpos - newarg -> x_base;
@@ -651,13 +657,28 @@ void* projection_thread(void* arg){
             double seeker_temposy = (seekervec2_y_dir * j) + ystarterpoint;
             double seeker_temposz = (seekervec2_z_dir * j) + zstarterpoint;
             for(int td = 0; td < seekervec1_mag_int; td++){
-                double seeker_temposx2 = ceil((seekervec1_x_dir * td) + seeker_temposx);
-                double seeker_temposy2 = ceil((seekervec1_y_dir * td) + seeker_temposy);
-                double seeker_temposz2 = ceil((seekervec1_z_dir * td) + seeker_temposz);
-                cout << "d";
+                int seeker_temposx2 = static_cast<int>(ceil((seekervec1_x_dir * td) + seeker_temposx));
+                int seeker_temposy2 = static_cast<int>(ceil((seekervec1_y_dir * td) + seeker_temposy));
+                int seeker_temposz2 = static_cast<int>(ceil((seekervec1_z_dir * td) + seeker_temposz));
+                //cout << "d";
+                
+                
+                observerpoint* checkthis = newarg -> space_info.newspace -> mapply[seeker_temposx2][seeker_temposy2][seeker_temposz2].next;
+                while(checkthis != nullptr){
+                    cout << "bleak";
+                    theend -> pointed_at = checkthis;
+                    if((checkthis -> next) != nullptr){
+                        theend -> thenext = new shaped_objects;
+                        theend = theend -> thenext;
+                        cout << "Hermin";
+                    }
+        
+                    
+                    checkthis = checkthis -> next;
+                }
 
             }
-            cout << endl;
+           // cout << endl;
         }
 cout << endl << endl;
         
@@ -669,6 +690,7 @@ cout << endl << endl;
     i++;
     }while(i < render_hypo2);
  
+ //cout << "twain" << (thestart -> pointed_at.xlocation);
 
 return NULL;
 }
@@ -734,17 +756,17 @@ int main() {
   
      plane1.additionalplane = new planar_stuff;     
      plane1.additionalplane -> space_info = space1_seeder;
-     plane1.additionalplane -> xpoint1 = 1;
-     plane1.additionalplane -> ypoint1 = 2;
-     plane1.additionalplane -> zpoint1 = 3;
+     plane1.additionalplane -> xpoint1 = 70;
+     plane1.additionalplane -> ypoint1 = 70;
+     plane1.additionalplane -> zpoint1 = 60;
 
-     plane1.additionalplane -> xpoint2 = 20;
-     plane1.additionalplane -> ypoint2 = 30;
-     plane1.additionalplane -> zpoint2 = 15;
+     plane1.additionalplane -> xpoint2 = 80;
+     plane1.additionalplane -> ypoint2 = 60;
+     plane1.additionalplane -> zpoint2 = 70;
 
-     plane1.additionalplane -> xpoint3 = 2;
-     plane1.additionalplane -> ypoint3 = 3;
-     plane1.additionalplane -> zpoint3 = 4;
+     plane1.additionalplane -> xpoint3 = 80;
+     plane1.additionalplane -> ypoint3 = 60;
+     plane1.additionalplane -> zpoint3 = 100;
 
 
     //projection thread stuff
@@ -760,8 +782,8 @@ int main() {
     viewpoint1.x_base = 40;
     viewpoint1.y_base = 42.3;
     viewpoint1.z_base = 43;
-    viewpoint1.window_length = 4;
-    viewpoint1.window_height = 8;
+    viewpoint1.window_length = 30;
+    viewpoint1.window_height = 30;
 
 
 
@@ -769,11 +791,11 @@ int main() {
     
     //pthread_create(&thread, NULL, liner, (void*)&line1);
     //pthread_create(&thread2, NULL, liner, (void*)&line2);
-    //pthread_create(&thread3, NULL, planar, (void*)&plane1);
+ //   pthread_create(&thread3, NULL, planar, (void*)&plane1);
     pthread_create(&thread4, NULL, projection_thread, (void*)&viewpoint1);
     //pthread_join(thread, NULL); 
     //pthread_join(thread2, NULL);
-    //pthread_join(thread3, NULL);  
+ //   pthread_join(thread3, NULL);  
     pthread_join(thread4, NULL);  
 
 
