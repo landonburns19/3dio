@@ -433,8 +433,6 @@ struct BMPInfoHeader {
 
     
     file.write(reinterpret_cast<char*>(pixelData.data()), pixelData.size());
-
-    
     file.close();
     
 

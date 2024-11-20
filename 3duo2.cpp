@@ -510,14 +510,15 @@ void* projection_thread(void* arg){
     double search_xvec = (xvec) / search_vec_hypo;
     double search_yvec = (yvec) / search_vec_hypo;
     double search_zvec = (zvec) / search_vec_hypo;
-    
+
+   /*
     double renderx = (search_xvec * (newarg -> render_distance_multipliar));
     double rendery = (search_yvec * (newarg -> render_distance_multipliar));
     double renderz = (search_zvec * (newarg -> render_distance_multipliar));
     double render_hypo = sqrt((renderx * renderx) + (rendery * rendery) + (renderz * renderz));
     //cout << render_hypo;
     int render_hypo2 = static_cast<int>(round(render_hypo));
-
+*/ 
 
     newarg -> ydirvec = 1;
     newarg -> xdirvec = ((-1 * (yvec * (newarg -> ydirvec))) / (xvec + zvec));
@@ -535,7 +536,7 @@ void* projection_thread(void* arg){
     double max_up_orvecx = max_up_posx - (newarg -> x_base);
     double max_up_orvecy = max_up_posy - (newarg -> y_base);
     double max_up_orvecz = max_up_posz - (newarg -> z_base);
-    double max_up_hypo = (max_up_orvecx * max_up_orvecx) + (max_up_orvecy * max_up_orvecy) + (max_up_orvecz * max_up_orvecz);
+    double max_up_hypo = sqrt((max_up_orvecx * max_up_orvecx) + (max_up_orvecy * max_up_orvecy) + (max_up_orvecz * max_up_orvecz)); //fixed?
     max_up_orvecx = max_up_orvecx / max_up_hypo;
     max_up_orvecy = max_up_orvecy / max_up_hypo;
     max_up_orvecz = max_up_orvecz / max_up_hypo;
@@ -547,7 +548,7 @@ void* projection_thread(void* arg){
     double max_down_orvecx = max_down_posx - (newarg -> x_base);
     double max_down_orvecy = max_down_posy - (newarg -> y_base);
     double max_down_orvecz = max_down_posz - (newarg -> z_base);
-    double max_down_hypo = (max_down_orvecx * max_down_orvecx) + (max_down_orvecy * max_down_orvecy) + (max_down_orvecz * max_down_orvecz);
+    double max_down_hypo = sqrt((max_down_orvecx * max_down_orvecx) + (max_down_orvecy * max_down_orvecy) + (max_down_orvecz * max_down_orvecz));//fixed?
     max_down_orvecx = max_down_orvecx / max_down_hypo;
     max_down_orvecy = max_down_orvecy / max_down_hypo;
     max_down_orvecz = max_down_orvecz / max_down_hypo;
@@ -570,11 +571,12 @@ void* projection_thread(void* arg){
     double max_right_orvecx = max_right_posx - (newarg -> x_base);
     double max_right_orvecy = max_right_posy - (newarg -> y_base);
     double max_right_orvecz = max_right_posz - (newarg -> z_base);
-    double max_right_hypo = (max_right_orvecx * max_right_orvecx) + (max_right_orvecy * max_right_orvecy) + (max_right_orvecz * max_right_orvecz);
+    double max_right_hypo = sqrt((max_right_orvecx * max_right_orvecx) + (max_right_orvecy * max_right_orvecy) + (max_right_orvecz * max_right_orvecz));//fixed?
     max_right_orvecx = max_right_orvecx / max_right_hypo;
     max_right_orvecy = max_right_orvecy / max_right_hypo;
     max_right_orvecz = max_right_orvecz / max_right_hypo;
 
+//
 
     double max_left_posx = (newarg -> xpos) - (x2dirvec * newarg -> window_length);
     double max_left_posy = (newarg -> ypos) - (y2dirvec * newarg -> window_length);
@@ -582,7 +584,7 @@ void* projection_thread(void* arg){
     double max_left_orvecx = max_left_posx - (newarg -> x_base);
     double max_left_orvecy = max_left_posy - (newarg -> y_base);
     double max_left_orvecz = max_left_posz - (newarg -> z_base);
-    double max_left_hypo = (max_left_orvecx * max_left_orvecx) + (max_left_orvecy * max_left_orvecy) + (max_left_orvecz * max_left_orvecz);
+    double max_left_hypo = sqrt((max_left_orvecx * max_left_orvecx) + (max_left_orvecy * max_left_orvecy) + (max_left_orvecz * max_left_orvecz));//fixed?
     max_left_orvecx = max_left_orvecx / max_left_hypo;
     max_left_orvecy = max_left_orvecy / max_left_hypo;
     max_left_orvecz = max_left_orvecz / max_left_hypo;
@@ -607,22 +609,22 @@ void* projection_thread(void* arg){
         xtemp_max_up = pointfinder(i, max_up_posx, max_up_orvecx);
         ytemp_max_up = pointfinder(i, max_up_posy, max_up_orvecy);
         ztemp_max_up = pointfinder(i, max_up_posz, max_up_orvecz);
-        cout << endl << "maxup" << endl << xtemp_max_up << endl << ytemp_max_up << endl << ztemp_max_up;
+      //  cout << endl << "maxup" << endl << xtemp_max_up << endl << ytemp_max_up << endl << ztemp_max_up;
 
         xtemp_max_down = pointfinder(i, max_down_posx, max_down_orvecx);
         ytemp_max_down = pointfinder(i, max_down_posy, max_down_orvecy);
         ztemp_max_down = pointfinder(i, max_down_posz, max_down_orvecz);
-        cout << endl << "maxdown" << endl << xtemp_max_down << endl << ytemp_max_down << endl << ztemp_max_down;
+     //   cout << endl << "maxdown" << endl << xtemp_max_down << endl << ytemp_max_down << endl << ztemp_max_down;
 
         xtemp_max_left = pointfinder(i, max_left_posx, max_left_orvecx);
         ytemp_max_left = pointfinder(i, max_left_posy, max_left_orvecy);
         ztemp_max_left = pointfinder(i, max_left_posz, max_left_orvecz);
-        cout << endl << "maxleft" << endl << xtemp_max_left << endl << ytemp_max_left << endl << ztemp_max_left;
+     //   cout << endl << "maxleft" << endl << xtemp_max_left << endl << ytemp_max_left << endl << ztemp_max_left;
 
         xtemp_max_right = pointfinder(i, max_right_posx, max_right_orvecx);
         ytemp_max_right = pointfinder(i, max_right_posy, max_right_orvecy);
         ztemp_max_right = pointfinder(i, max_right_posz, max_right_orvecz);
-        cout << endl << "maxright" << endl << xtemp_max_right << endl << ytemp_max_right << endl << ztemp_max_right << endl;
+     //   cout << endl << "maxright" << endl << xtemp_max_right << endl << ytemp_max_right << endl << ztemp_max_right << endl;
         
 
         
@@ -637,19 +639,19 @@ void* projection_thread(void* arg){
         double seekervec2_mag = sqrt((seekervec2_x * seekervec2_x) + (seekervec2_y * seekervec2_y) + (seekervec2_z * seekervec2_z));
 
         
-        double xstarterpoint = xtemp_max_left - (seekervec1_x / 2);
+        double xstarterpoint = xtemp_max_left - (seekervec1_x / 2); 
         double ystarterpoint = ytemp_max_left - (seekervec1_y / 2);
         double zstarterpoint = ztemp_max_left - (seekervec1_z / 2);
 
 
         int seekervec2_mag_int = static_cast<int>(ceil(seekervec2_mag));
         double seekervec2_x_dir = seekervec2_x / seekervec2_mag;
-        double seekervec2_y_dir = seekervec2_y / seekervec2_mag;
+        double seekervec2_y_dir = seekervec2_y / seekervec2_mag; 
         double seekervec2_z_dir = seekervec2_z / seekervec2_mag;
 
         int seekervec1_mag_int = static_cast<int>(ceil(seekervec1_mag));
         double seekervec1_x_dir = seekervec1_x / seekervec1_mag;
-        double seekervec1_y_dir = seekervec1_y / seekervec1_mag;
+        double seekervec1_y_dir = seekervec1_y / seekervec1_mag; 
         double seekervec1_z_dir = seekervec1_z / seekervec1_mag;
 
         for(int j = 0; j < seekervec2_mag_int; j++){
@@ -662,8 +664,9 @@ void* projection_thread(void* arg){
                 int seeker_temposz2 = static_cast<int>(ceil((seekervec1_z_dir * td) + seeker_temposz));
                 //cout << "d";
                 
-                
+                // there might be a need to handle mirroring by removing integer values
                 observerpoint* checkthis = newarg -> space_info.newspace -> mapply[seeker_temposx2][seeker_temposy2][seeker_temposz2].next;
+                cout << "start " << seeker_temposx2 << " " << seeker_temposy2 << " " << seeker_temposz2 << " mag " << sqrt((seeker_temposx2 * seeker_temposx2) + (seeker_temposy2 * seeker_temposy2) + (seeker_temposz2 * seeker_temposz2)) << endl;
                 while(checkthis != nullptr){
                     cout << "bleak";
                     theend -> pointed_at = checkthis;
@@ -678,19 +681,109 @@ void* projection_thread(void* arg){
                 }
 
             }
-           // cout << endl;
+            //cout << endl;
         }
-cout << endl << endl;
-        
-
-
-
-
-
+//cout << endl << endl;
     i++;
-    }while(i < render_hypo2);
- 
- //cout << "twain" << (thestart -> pointed_at.xlocation);
+
+ }while(i < (newarg -> render_distance_multipliar));
+ cout << "twain" << (thestart -> pointed_at -> xlocation);
+
+
+
+shaped_objects* exthat;
+exthat = thestart;
+
+#pragma pack(push, 1)
+
+
+struct BMPFileHeader {
+    uint16_t fileType{0x4D42};  
+    uint32_t fileSize{30054};   // Size of the file (header + info + pixel data)
+    uint16_t reserved1{0};      
+    uint16_t reserved2{0};      
+    uint32_t offsetData{54};    // Start position of pixel data (54 bytes after file & info headers)
+};
+
+struct BMPInfoHeader {
+    uint32_t size{40};          // Size of this header (40 bytes)
+    int32_t width{100};         // Width of the bitmap in pixels (100)
+    int32_t height{100};        // Height of the bitmap in pixels (100)
+    uint16_t planes{1};         
+    uint16_t bitCount{24};      // Bits per pixel (24 for RGB)
+    uint32_t compression{0};    
+    uint32_t sizeImage{30000};  // Size of the pixel data (100 * 100 * 3 bytes for RGB)
+    int32_t xPixelsPerMeter{0}; 
+    int32_t yPixelsPerMeter{0}; 
+    uint32_t colorsUsed{0};     
+    uint32_t colorsImportant{0};
+};
+#pragma pack(pop)
+    BMPFileHeader fileHeader;
+    BMPInfoHeader infoHeader;
+    fileHeader.fileSize = sizeof(BMPFileHeader) + sizeof(BMPInfoHeader) + infoHeader.sizeImage;
+    string filename = "output.bmp";
+    ofstream file(filename, std::ios::out | std::ios::binary);
+    file.write(reinterpret_cast<char*>(&fileHeader), sizeof(BMPFileHeader));
+    file.write(reinterpret_cast<char*>(&infoHeader), sizeof(BMPInfoHeader));
+    vector<uint8_t> pixelData(infoHeader.sizeImage, 255); // Initialize with white pixels
+    
+double x_projection_origin = max_left_posx - ((max_up_posx - max_down_posx) / 2);
+double y_projection_origin = max_left_posy - ((max_up_posy - max_down_posy) / 2);
+double z_projection_origin = max_left_posz - ((max_up_posz - max_down_posz) / 2);
+
+
+
+
+ while((exthat -> pointed_at) != nullptr){
+     
+    double t_this = (((xvec * -1) * ((newarg -> x_base) - (newarg -> xpos))) + ((yvec * -1) * ((newarg -> y_base) - (newarg -> ypos))) + ((zvec * -1) * ((newarg -> z_base) - (newarg -> zpos)))) / ((xvec * (exthat -> pointed_at -> xlocation) - (newarg -> x_base)) + (yvec * (exthat -> pointed_at -> ylocation) - (newarg -> y_base)) + (zvec * (exthat -> pointed_at -> zlocation) - (newarg -> z_base)));
+    cout << endl << t_this << endl;
+    double xmath_proj_point = (newarg -> x_base) + (t_this * ((exthat -> pointed_at -> xlocation) - (newarg -> x_base)));
+    double ymath_proj_point = (newarg -> y_base) + (t_this * ((exthat -> pointed_at -> ylocation) - (newarg -> y_base)));
+    double zmath_proj_point = (newarg -> z_base) + (t_this * ((exthat -> pointed_at -> zlocation) - (newarg -> z_base)));
+    cout << endl << "x " << xmath_proj_point << endl;
+    cout << "y " << ymath_proj_point << endl;
+    cout << "z " << zmath_proj_point << endl;
+
+    double projmultiply = ((((newarg -> xdirvec) * (xmath_proj_point - (x_projection_origin))) + ((newarg -> ydirvec) * (ymath_proj_point - (y_projection_origin))) + ((newarg -> zdirvec) * (zmath_proj_point - (z_projection_origin)))) / (((newarg -> xdirvec) * (newarg -> xdirvec)) + ((newarg -> ydirvec) * (newarg -> ydirvec)) + ((newarg -> zdirvec) * (newarg -> zdirvec))));
+    
+    double xupcom = projmultiply * (newarg -> xdirvec);
+    double yupcom = projmultiply * (newarg -> ydirvec);
+    double zupcom = projmultiply * (newarg -> zdirvec);
+
+    double xsidecom = (xmath_proj_point - (x_projection_origin)) - xupcom;
+    double ysidecom = (ymath_proj_point - (y_projection_origin)) - yupcom;
+    double zsidecom = (zmath_proj_point - (z_projection_origin)) - zupcom;
+
+    double upmag = sqrt((xupcom * xupcom) + (yupcom * yupcom) + (zupcom * zupcom));
+    double sidemag = sqrt((xsidecom * xsidecom) + (ysidecom * ysidecom) + (zsidecom * zsidecom));
+    upmag = static_cast<int>(100 * (upmag / sqrt(((max_up_posx - max_down_posx) * (max_up_posx - max_down_posx)) + ((max_up_posy - max_down_posy) * (max_up_posy - max_down_posy)) + ((max_up_posz - max_down_posz) * (max_up_posz - max_down_posz))))); // 100 means the amount of pixles
+    sidemag = static_cast<int>(100 * (sidemag / sqrt(((max_right_posx - max_left_posx) * (max_right_posx - max_left_posx)) + ((max_right_posy - max_left_posy) * (max_right_posy - max_left_posy)) + ((max_right_posz - max_left_posz) * (max_right_posz - max_left_posz)))));
+    
+
+    cout << "upmag" << upmag;
+    cout << "sidemag" << sidemag;
+
+
+    int pixelIndex = (upmag * 100 + sidemag) * 3;
+        pixelData[pixelIndex] = 0;      // Red
+        pixelData[pixelIndex + 1] = 0;  // Green
+        pixelData[pixelIndex + 2] = 0;  // Blue
+
+
+
+    if((exthat -> thenext) == nullptr){
+        break;
+    }
+    else{
+        exthat = (exthat -> thenext);
+    }
+
+ }
+
+ file.write(reinterpret_cast<char*>(pixelData.data()), pixelData.size());
+ file.close();
 
 return NULL;
 }
@@ -720,11 +813,11 @@ int main() {
     pthread_t thread;
     line_stuff line1;
     line1.space_info = space1_seeder;
-    line1.xlocation_inspace = 5;
-    line1.ylocation_inspace = 5.2;
-    line1.zlocation_inspace = 15;
+    line1.xlocation_inspace = 75;
+    line1.ylocation_inspace = 67.5;
+    line1.zlocation_inspace = 66.75;
     line1.xvec = 5.1;
-    line1.yvec = 6;
+    line1.yvec = 1;
     line1.zvec = 7;
 
     pthread_t thread2;
@@ -756,9 +849,9 @@ int main() {
   
      plane1.additionalplane = new planar_stuff;     
      plane1.additionalplane -> space_info = space1_seeder;
-     plane1.additionalplane -> xpoint1 = 70;
-     plane1.additionalplane -> ypoint1 = 70;
-     plane1.additionalplane -> zpoint1 = 60;
+     plane1.additionalplane -> xpoint1 = 52;
+     plane1.additionalplane -> ypoint1 = 52;
+     plane1.additionalplane -> zpoint1 = 50;
 
      plane1.additionalplane -> xpoint2 = 80;
      plane1.additionalplane -> ypoint2 = 60;
@@ -766,39 +859,41 @@ int main() {
 
      plane1.additionalplane -> xpoint3 = 80;
      plane1.additionalplane -> ypoint3 = 60;
-     plane1.additionalplane -> zpoint3 = 100;
+     plane1.additionalplane -> zpoint3 = 90;
 
 
     //projection thread stuff
     pthread_t thread4;
     projection_stuff viewpoint1;
     viewpoint1.space_info = space1_seeder;
-    viewpoint1.render_distance_multipliar = 30;
+    viewpoint1.render_distance_multipliar = 10;
 
     viewpoint1.xpos = 50;
-    viewpoint1.ypos = 45;
-    viewpoint1.zpos = 44.5;
+    viewpoint1.ypos = 50;
+    viewpoint1.zpos = 50;
 
-    viewpoint1.x_base = 40;
-    viewpoint1.y_base = 42.3;
-    viewpoint1.z_base = 43;
-    viewpoint1.window_length = 30;
-    viewpoint1.window_height = 30;
+    viewpoint1.x_base = 45;
+    viewpoint1.y_base = 45;
+    viewpoint1.z_base = 45;
+    viewpoint1.window_length = 15;
+    viewpoint1.window_height = 15;
 
 
 
 
     
-    //pthread_create(&thread, NULL, liner, (void*)&line1);
+    pthread_create(&thread, NULL, liner, (void*)&line1);
     //pthread_create(&thread2, NULL, liner, (void*)&line2);
- //   pthread_create(&thread3, NULL, planar, (void*)&plane1);
-    pthread_create(&thread4, NULL, projection_thread, (void*)&viewpoint1);
-    //pthread_join(thread, NULL); 
+    pthread_create(&thread3, NULL, planar, (void*)&plane1);
+    
+    pthread_join(thread, NULL); 
     //pthread_join(thread2, NULL);
- //   pthread_join(thread3, NULL);  
-    pthread_join(thread4, NULL);  
+    pthread_join(thread3, NULL); 
 
+    pthread_create(&thread4, NULL, projection_thread, (void*)&viewpoint1);
+   pthread_join(thread4, NULL);  
 
+//projection_thread(&viewpoint1);
 
     return 0;
 }
