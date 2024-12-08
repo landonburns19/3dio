@@ -21,6 +21,10 @@ observerpoint* next = nullptr; //this can lead to other points that are "checked
 observerpoint** shape_array = nullptr; //this can lead to other points in the shape.
 int shape_array_size = 0; // this holds the amount of points in the shape
 
+int line_length = 0;
+int mag_up = 0;
+int mag_side = 0;
+
 //location information
 double xlocation = -1.0;
 double ylocation = -1.0;
@@ -69,11 +73,16 @@ void change_shape_array(observerpoint* temp_shape_array[], int tempsize){
 
     shape_array = temp_shape_array;
     shape_array_size = tempsize;
+    //cout << endl << "shape array size" << shape_array_size << endl;
     return;
 
 }
 
-
+void change_line_length(int temp_line_length){
+    // ?minus one because temp_line_length was defined for an array?
+    line_length = temp_line_length;
+    cout << endl << "line length" << line_length << endl;
+}
 
 mutex pos;
 private:
@@ -299,6 +308,7 @@ void* liner(void* arg) {
 
     for(int ed = 0; ed < j; ed++){
         connectedpoints[ed] -> change_shape_array(connectedpoints, j);
+        connectedpoints[ed] -> change_line_length(j);
 
     }
 
@@ -382,7 +392,7 @@ observerpoint** line_from_two_pos(double x1, double y1, double z1, double x2, do
 
     for(int ed = 0; ed < j; ed++){
         connectedpoints[ed] -> change_shape_array(connectedpoints, j);
-
+        connectedpoints[ed] -> change_line_length(j);
     }
 cout << "nice";
     for(int f = 0; f < j; f++){
@@ -488,13 +498,43 @@ int pointfinder(int renderi, double pos, double vec){
 }
 
 
-
-
 class shaped_objects{
     public:
     observerpoint* pointed_at;
     shaped_objects* thenext;
 };
+
+
+
+//isinmap((objectsthatmustbemapped3 -> pointed_at -> shape_array[i1]), (exthat))
+bool isinmap(observerpoint* isthishere, shaped_objects* tosearchthrough){
+    while(true){
+
+        if(isthishere == tosearchthrough -> pointed_at){
+            return true;
+        }
+
+
+    if(tosearchthrough -> thenext != nullptr){
+    tosearchthrough = tosearchthrough -> thenext;
+    }
+    else{
+        return false;
+    }
+    }
+}
+
+//findpointonplanemultipliar(((objectsthatmustbemapped_slider -> pointed_at -> shape_array[i1]) -> xlocation), ((objectsthatmustbemapped_slider -> pointed_at -> shape_array[i1]) -> ylocation), ((objectsthatmustbemapped_slider -> pointed_at -> shape_array[i1]) -> zlocation), xvec, yvec, zvec, (newarg -> x_base), (newarg -> y_base), (newarg -> z_base));
+double findpointonplanemultipliar(double tempx, double tempy, double tempz, double vecx, double vecy, double vecz, double basex, double basey, double basez){
+    
+    double hypo = sqrt(((tempx - basex) * (tempx - basex)) + ((tempy - basey) * (tempy - basey)) + ((tempz - basez) * (tempz - basez)));
+    double dirvecx = (tempx - basex) / hypo;
+    double dirvecy = (tempy - basey) / hypo;
+    double dirvecz = (tempz - basez) / hypo;
+    
+    return (-1 * (((vecx * basex) + (vecy * basey) + (vecz * basez)) / ((dirvecx * vecx) + (dirvecy * vecy) + (dirvecz * vecz))));
+
+}
 
 void* projection_thread(void* arg){
     projection_stuff* newarg = static_cast<projection_stuff*>(arg);
@@ -666,7 +706,7 @@ void* projection_thread(void* arg){
                 
                 // there might be a need to handle mirroring by removing integer values
                 observerpoint* checkthis = newarg -> space_info.newspace -> mapply[seeker_temposx2][seeker_temposy2][seeker_temposz2].next;
-                cout << "start " << seeker_temposx2 << " " << seeker_temposy2 << " " << seeker_temposz2 << " mag " << sqrt((seeker_temposx2 * seeker_temposx2) + (seeker_temposy2 * seeker_temposy2) + (seeker_temposz2 * seeker_temposz2)) << endl;
+               // cout << "start " << seeker_temposx2 << " " << seeker_temposy2 << " " << seeker_temposz2 << " mag " << sqrt((seeker_temposx2 * seeker_temposx2) + (seeker_temposy2 * seeker_temposy2) + (seeker_temposz2 * seeker_temposz2)) << endl;
                 while(checkthis != nullptr){
                     cout << "bleak";
                     theend -> pointed_at = checkthis;
@@ -693,6 +733,43 @@ void* projection_thread(void* arg){
 
 shaped_objects* exthat;
 exthat = thestart;
+shaped_objects* objectsthatmustbemapped = new shaped_objects;
+shaped_objects* objectsthatmustbemapped_slider = objectsthatmustbemapped;
+shaped_objects* objectsthatmustbemapped_slider2;
+//observerpoint* observerpoint_slider;
+/**/
+while(true){
+    objectsthatmustbemapped_slider2 = objectsthatmustbemapped;
+
+    //(exthat -> pointed_at -> shape_array[0])
+    
+
+
+    while((exthat -> pointed_at -> shape_array[0] != objectsthatmustbemapped_slider2 -> pointed_at)){
+        if((objectsthatmustbemapped_slider2 -> thenext) != nullptr){
+            objectsthatmustbemapped_slider2 = objectsthatmustbemapped_slider2 -> thenext;
+        }
+        else{
+
+            objectsthatmustbemapped_slider2 -> thenext = new shaped_objects;
+            objectsthatmustbemapped_slider2 -> thenext -> pointed_at = (exthat -> pointed_at -> shape_array[0]);
+            cout << endl << "unique " << objectsthatmustbemapped_slider2 -> thenext -> pointed_at;
+            break;
+        }
+        
+        
+    }
+
+    if(exthat -> thenext != nullptr){
+    exthat = exthat -> thenext;
+    }
+    else{
+        break;
+    }
+}
+
+objectsthatmustbemapped_slider = objectsthatmustbemapped_slider -> thenext;
+//cout << endl << "unique6 " << objectsthatmustbemapped_slider -> thenext -> pointed_at;
 
 #pragma pack(push, 1)
 
@@ -732,38 +809,48 @@ double x_projection_origin = max_left_posx - ((max_up_posx - max_down_posx) / 2)
 double y_projection_origin = max_left_posy - ((max_up_posy - max_down_posy) / 2);
 double z_projection_origin = max_left_posz - ((max_up_posz - max_down_posz) / 2);
 
+double vertivecx = (max_up_posx - max_down_posx);
+double vertivecy = (max_up_posy - max_down_posy);
+double vertivecz = (max_up_posz - max_down_posz);
 
+double horivecx = (max_right_posx - max_left_posx);
+double horivecy = (max_right_posy - max_left_posy);
+double horivecz = (max_right_posz - max_left_posz);
 
-
+/*
+exthat = thestart;
  while((exthat -> pointed_at) != nullptr){
      
+     //finds location of projected point in 3d space
     double t_this = (((xvec * -1) * ((newarg -> x_base) - (newarg -> xpos))) + ((yvec * -1) * ((newarg -> y_base) - (newarg -> ypos))) + ((zvec * -1) * ((newarg -> z_base) - (newarg -> zpos)))) / ((xvec * (exthat -> pointed_at -> xlocation) - (newarg -> x_base)) + (yvec * (exthat -> pointed_at -> ylocation) - (newarg -> y_base)) + (zvec * (exthat -> pointed_at -> zlocation) - (newarg -> z_base)));
-    cout << endl << t_this << endl;
+    //cout << endl << t_this << endl;
     double xmath_proj_point = (newarg -> x_base) + (t_this * ((exthat -> pointed_at -> xlocation) - (newarg -> x_base)));
     double ymath_proj_point = (newarg -> y_base) + (t_this * ((exthat -> pointed_at -> ylocation) - (newarg -> y_base)));
     double zmath_proj_point = (newarg -> z_base) + (t_this * ((exthat -> pointed_at -> zlocation) - (newarg -> z_base)));
-    cout << endl << "x " << xmath_proj_point << endl;
-    cout << "y " << ymath_proj_point << endl;
-    cout << "z " << zmath_proj_point << endl;
+    //cout << endl << "x " << xmath_proj_point << endl;
+    //cout << "y " << ymath_proj_point << endl;
+    //cout << "z " << zmath_proj_point << endl;
 
+    //projection
     double projmultiply = ((((newarg -> xdirvec) * (xmath_proj_point - (x_projection_origin))) + ((newarg -> ydirvec) * (ymath_proj_point - (y_projection_origin))) + ((newarg -> zdirvec) * (zmath_proj_point - (z_projection_origin)))) / (((newarg -> xdirvec) * (newarg -> xdirvec)) + ((newarg -> ydirvec) * (newarg -> ydirvec)) + ((newarg -> zdirvec) * (newarg -> zdirvec))));
-    
     double xupcom = projmultiply * (newarg -> xdirvec);
     double yupcom = projmultiply * (newarg -> ydirvec);
     double zupcom = projmultiply * (newarg -> zdirvec);
-
     double xsidecom = (xmath_proj_point - (x_projection_origin)) - xupcom;
     double ysidecom = (ymath_proj_point - (y_projection_origin)) - yupcom;
     double zsidecom = (zmath_proj_point - (z_projection_origin)) - zupcom;
 
+    //2D-fication
     double upmag = sqrt((xupcom * xupcom) + (yupcom * yupcom) + (zupcom * zupcom));
     double sidemag = sqrt((xsidecom * xsidecom) + (ysidecom * ysidecom) + (zsidecom * zsidecom));
     upmag = static_cast<int>(100 * (upmag / sqrt(((max_up_posx - max_down_posx) * (max_up_posx - max_down_posx)) + ((max_up_posy - max_down_posy) * (max_up_posy - max_down_posy)) + ((max_up_posz - max_down_posz) * (max_up_posz - max_down_posz))))); // 100 means the amount of pixles
     sidemag = static_cast<int>(100 * (sidemag / sqrt(((max_right_posx - max_left_posx) * (max_right_posx - max_left_posx)) + ((max_right_posy - max_left_posy) * (max_right_posy - max_left_posy)) + ((max_right_posz - max_left_posz) * (max_right_posz - max_left_posz)))));
     
+    (exthat -> pointed_at -> mag_up) = upmag;
+    (exthat -> pointed_at -> mag_side) = sidemag;
 
-    cout << "upmag" << upmag;
-    cout << "sidemag" << sidemag;
+    //cout << "upmag" << upmag;
+    //cout << "sidemag" << sidemag;
 
 
     int pixelIndex = (upmag * 100 + sidemag) * 3;
@@ -781,6 +868,244 @@ double z_projection_origin = max_left_posz - ((max_up_posz - max_down_posz) / 2)
     }
 
  }
+*/
+cout << endl << endl << " " << exthat -> pointed_at -> shape_array_size;
+
+
+
+//cout << endl << "unique7 " << objectsthatmustbemapped_slider -> thenext -> pointed_at;
+
+
+exthat = thestart;         
+
+        while(true){
+
+            int i1 = 0; 
+            //int iforward = 0;
+            int iprev = 0;
+            int canter = 0; 
+            
+            
+            do{
+            
+                cout << "canter " << canter;
+                if(canter == 2){
+                cout << "iprev" << iprev << endl;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                if(isinmap((objectsthatmustbemapped_slider -> pointed_at -> shape_array[i1]), (exthat)) || isinmap((objectsthatmustbemapped_slider -> pointed_at -> shape_array[iprev]), (exthat))){
+                    
+                    //find points on plane
+                    double mult1 = findpointonplanemultipliar(((objectsthatmustbemapped_slider -> pointed_at -> shape_array[i1]) -> xlocation), ((objectsthatmustbemapped_slider -> pointed_at -> shape_array[i1]) -> ylocation), ((objectsthatmustbemapped_slider -> pointed_at -> shape_array[i1]) -> zlocation), xvec, yvec, zvec, (newarg -> x_base), (newarg -> y_base), (newarg -> z_base));
+                    double tempx13 = ((objectsthatmustbemapped_slider -> pointed_at -> shape_array[i1]) -> xlocation);
+                    double tempy13 = ((objectsthatmustbemapped_slider -> pointed_at -> shape_array[i1]) -> ylocation);
+                    double tempz13 = ((objectsthatmustbemapped_slider -> pointed_at -> shape_array[i1]) -> zlocation);
+                    double hypo13 = sqrt(((tempx13 - (newarg -> x_base)) * (tempx13 - (newarg -> x_base))) + ((tempy13 - (newarg -> y_base)) * (tempy13 - (newarg -> y_base))) + ((tempz13 - (newarg -> z_base)) * (tempz13 - (newarg -> z_base))));
+                    double dirvecx13 = (tempx13 - (newarg -> x_base)) / hypo13;
+                    double dirvecy13 = (tempy13 - (newarg -> y_base)) / hypo13;
+                    double dirvecz13 = (tempz13 - (newarg -> z_base)) / hypo13;
+                    double xpointonplane1 = (newarg -> x_base) + (dirvecx13 * mult1);
+                    double ypointonplane1 = (newarg -> y_base) + (dirvecy13 * mult1);
+                    double zpointonplane1 = (newarg -> z_base) + (dirvecz13 * mult1);
+                    
+
+                    double mult2 = findpointonplanemultipliar(((objectsthatmustbemapped_slider -> pointed_at -> shape_array[iprev]) -> xlocation), ((objectsthatmustbemapped_slider -> pointed_at -> shape_array[iprev]) -> ylocation), ((objectsthatmustbemapped_slider -> pointed_at -> shape_array[iprev]) -> zlocation), xvec, yvec, zvec, (newarg -> x_base), (newarg -> y_base), (newarg -> z_base));
+                    double tempx14 = ((objectsthatmustbemapped_slider -> pointed_at -> shape_array[iprev]) -> xlocation);
+                    double tempy14 = ((objectsthatmustbemapped_slider -> pointed_at -> shape_array[iprev]) -> ylocation);
+                    double tempz14 = ((objectsthatmustbemapped_slider -> pointed_at -> shape_array[iprev]) -> zlocation);
+                    double hypo14 = sqrt(((tempx14 - (newarg -> x_base)) * (tempx14 - (newarg -> x_base))) + ((tempy14 - (newarg -> y_base)) * (tempy14 - (newarg -> y_base))) + ((tempz14 - (newarg -> z_base)) * (tempz14 - (newarg -> z_base))));
+                    double dirvecx14 = (tempx14 - (newarg -> x_base)) / hypo14;
+                    double dirvecy14 = (tempy14 - (newarg -> y_base)) / hypo14;
+                    double dirvecz14 = (tempz14 - (newarg -> z_base)) / hypo14;
+                    double xpointonplane2 = (newarg -> x_base) + (dirvecx14 * mult2);
+                    double ypointonplane2 = (newarg -> y_base) + (dirvecy14 * mult2);
+                    double zpointonplane2 = (newarg -> z_base) + (dirvecz14 * mult2);
+                    
+
+                    double xveconplane = xpointonplane2 - xpointonplane1;
+                    double yveconplane = ypointonplane2 - ypointonplane1;
+                    double zveconplane = zpointonplane2 - zpointonplane1;
+
+                    double dirveconplane = sqrt((xveconplane * xveconplane) + (yveconplane * yveconplane) + (zveconplane * zveconplane));
+                    cout << "dirveconplane" << dirveconplane;
+                    double dirxveconplane = xveconplane / dirveconplane;
+                    double diryveconplane = yveconplane / dirveconplane;
+                    double dirzveconplane = zveconplane / dirveconplane;
+                                       
+                    
+                    //project along the supposed x and suppossed y axes
+                    for(int tyu = 0; tyu < static_cast<int>(ceil(dirveconplane) * 100); tyu++){
+                        double xupcom = (tyu * dirxveconplane) / 100 + xpointonplane1;
+                        double yupcom = (tyu * diryveconplane) / 100 + ypointonplane1;
+                        double zupcom = (tyu * dirzveconplane) / 100 + zpointonplane1;
+
+                        double vertimagmult = ((((xupcom - x_projection_origin) * vertivecx) + ((yupcom - y_projection_origin) * vertivecy) + ((zupcom - z_projection_origin) * vertivecz)) / ((vertivecx * vertivecx) + (vertivecy * vertivecy) + (vertivecz * vertivecz)));
+                        double vertimagx = vertimagmult * vertivecx;
+                        double vertimagy = vertimagmult * vertivecy;
+                        double vertimagz = vertimagmult * vertivecz;
+                        double vertimag = sqrt((vertimagx * vertimagx) + (vertimagy * vertimagy) + (vertimagz * vertimagz));
+
+                        double horimagmult = ((((xupcom - x_projection_origin) * horivecx) + ((yupcom - y_projection_origin) * horivecy) + ((zupcom - z_projection_origin) * horivecz)) / ((horivecx * horivecx) + (horivecy * horivecy) + (horivecz * horivecz)));
+                        double horimagx = horimagmult * horivecx;
+                        double horimagy = horimagmult * horivecy;
+                        double horimagz = horimagmult * horivecz;
+                        double horimag = sqrt((horimagx * horimagx) + (horimagy * horimagy) + (horimagz * horimagz));
+
+                        int vertifinal = static_cast<int>(ceil(100 * (vertimag / sqrt((vertivecx * vertivecx) + (vertivecy * vertivecy) + (vertivecz * vertivecz)))));
+                        int horifinal = static_cast<int>(ceil(100 * (horimag / sqrt((horivecx * horivecx) + (horivecy * horivecy) + (horivecz * horivecz)))));
+                        //cout << endl << " " << vertimag << endl;
+                       //cout << " " << horimag;
+                        if(((vertifinal < 100) && (horifinal < 100))){
+        
+        int pixelIndex = (vertifinal * 100 + horifinal) * 3;
+        pixelData[pixelIndex] = 0;      // Red
+        pixelData[pixelIndex + 1] = 0;  // Green
+        pixelData[pixelIndex + 2] = 0;  // Blue
+                        
+                        
+                        }
+                    }
+
+                }
+                    
+                   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                    canter = 0;
+                    continue;
+                }
+                if(isinmap((objectsthatmustbemapped_slider -> pointed_at -> shape_array[i1]), (exthat)) || isinmap((objectsthatmustbemapped_slider -> pointed_at -> shape_array[i1 + ((objectsthatmustbemapped_slider -> pointed_at -> line_length) - 1)]), (exthat))){
+                    
+                    //find points on plane
+                    double mult1 = findpointonplanemultipliar(((objectsthatmustbemapped_slider -> pointed_at -> shape_array[i1]) -> xlocation), ((objectsthatmustbemapped_slider -> pointed_at -> shape_array[i1]) -> ylocation), ((objectsthatmustbemapped_slider -> pointed_at -> shape_array[i1]) -> zlocation), xvec, yvec, zvec, (newarg -> x_base), (newarg -> y_base), (newarg -> z_base));
+                    double tempx13 = ((objectsthatmustbemapped_slider -> pointed_at -> shape_array[i1]) -> xlocation);
+                    double tempy13 = ((objectsthatmustbemapped_slider -> pointed_at -> shape_array[i1]) -> ylocation);
+                    double tempz13 = ((objectsthatmustbemapped_slider -> pointed_at -> shape_array[i1]) -> zlocation);
+                    double hypo13 = sqrt(((tempx13 - (newarg -> x_base)) * (tempx13 - (newarg -> x_base))) + ((tempy13 - (newarg -> y_base)) * (tempy13 - (newarg -> y_base))) + ((tempz13 - (newarg -> z_base)) * (tempz13 - (newarg -> z_base))));
+                    double dirvecx13 = (tempx13 - (newarg -> x_base)) / hypo13;
+                    double dirvecy13 = (tempy13 - (newarg -> y_base)) / hypo13;
+                    double dirvecz13 = (tempz13 - (newarg -> z_base)) / hypo13;
+                    double xpointonplane1 = (newarg -> x_base) + (dirvecx13 * mult1);
+                    double ypointonplane1 = (newarg -> y_base) + (dirvecy13 * mult1);
+                    double zpointonplane1 = (newarg -> z_base) + (dirvecz13 * mult1);
+                    
+
+                    double mult2 = findpointonplanemultipliar(((objectsthatmustbemapped_slider -> pointed_at -> shape_array[i1 + ((objectsthatmustbemapped_slider -> pointed_at -> line_length) - 1)]) -> xlocation), ((objectsthatmustbemapped_slider -> pointed_at -> shape_array[i1 + ((objectsthatmustbemapped_slider -> pointed_at -> line_length) - 1)]) -> ylocation), ((objectsthatmustbemapped_slider -> pointed_at -> shape_array[i1 + ((objectsthatmustbemapped_slider -> pointed_at -> line_length) - 1)]) -> zlocation), xvec, yvec, zvec, (newarg -> x_base), (newarg -> y_base), (newarg -> z_base));
+                    double tempx14 = ((objectsthatmustbemapped_slider -> pointed_at -> shape_array[i1 + ((objectsthatmustbemapped_slider -> pointed_at -> line_length) - 1)]) -> xlocation);
+                    double tempy14 = ((objectsthatmustbemapped_slider -> pointed_at -> shape_array[i1 + ((objectsthatmustbemapped_slider -> pointed_at -> line_length) - 1)]) -> ylocation);
+                    double tempz14 = ((objectsthatmustbemapped_slider -> pointed_at -> shape_array[i1 + ((objectsthatmustbemapped_slider -> pointed_at -> line_length) - 1)]) -> zlocation);
+                    double hypo14 = sqrt(((tempx14 - (newarg -> x_base)) * (tempx14 - (newarg -> x_base))) + ((tempy14 - (newarg -> y_base)) * (tempy14 - (newarg -> y_base))) + ((tempz14 - (newarg -> z_base)) * (tempz14 - (newarg -> z_base))));
+                    double dirvecx14 = (tempx14 - (newarg -> x_base)) / hypo14;
+                    double dirvecy14 = (tempy14 - (newarg -> y_base)) / hypo14;
+                    double dirvecz14 = (tempz14 - (newarg -> z_base)) / hypo14;
+                    double xpointonplane2 = (newarg -> x_base) + (dirvecx14 * mult2);
+                    double ypointonplane2 = (newarg -> y_base) + (dirvecy14 * mult2);
+                    double zpointonplane2 = (newarg -> z_base) + (dirvecz14 * mult2);
+                    
+
+                    double xveconplane = xpointonplane2 - xpointonplane1;
+                    double yveconplane = ypointonplane2 - ypointonplane1;
+                    double zveconplane = zpointonplane2 - zpointonplane1;
+
+                    double dirveconplane = sqrt((xveconplane * xveconplane) + (yveconplane * yveconplane) + (zveconplane * zveconplane));
+                    cout << "dirveconplane" << dirveconplane;
+                    double dirxveconplane = xveconplane / dirveconplane;
+                    double diryveconplane = yveconplane / dirveconplane;
+                    double dirzveconplane = zveconplane / dirveconplane;
+                                       
+                    
+                    //project along the supposed x and suppossed y axes
+                    for(int tyu = 0; tyu < static_cast<int>(ceil(dirveconplane) * 100); tyu++){
+                        double xupcom = (tyu * dirxveconplane) / 100 + xpointonplane1;
+                        double yupcom = (tyu * diryveconplane) / 100 + ypointonplane1;
+                        double zupcom = (tyu * dirzveconplane) / 100 + zpointonplane1;
+
+                        double vertimagmult = ((((xupcom - x_projection_origin) * vertivecx) + ((yupcom - y_projection_origin) * vertivecy) + ((zupcom - z_projection_origin) * vertivecz)) / ((vertivecx * vertivecx) + (vertivecy * vertivecy) + (vertivecz * vertivecz)));
+                        double vertimagx = vertimagmult * vertivecx;
+                        double vertimagy = vertimagmult * vertivecy;
+                        double vertimagz = vertimagmult * vertivecz;
+                        double vertimag = sqrt((vertimagx * vertimagx) + (vertimagy * vertimagy) + (vertimagz * vertimagz));
+
+                        double horimagmult = ((((xupcom - x_projection_origin) * horivecx) + ((yupcom - y_projection_origin) * horivecy) + ((zupcom - z_projection_origin) * horivecz)) / ((horivecx * horivecx) + (horivecy * horivecy) + (horivecz * horivecz)));
+                        double horimagx = horimagmult * horivecx;
+                        double horimagy = horimagmult * horivecy;
+                        double horimagz = horimagmult * horivecz;
+                        double horimag = sqrt((horimagx * horimagx) + (horimagy * horimagy) + (horimagz * horimagz));
+
+                        int vertifinal = static_cast<int>(ceil(100 * (vertimag / sqrt((vertivecx * vertivecx) + (vertivecy * vertivecy) + (vertivecz * vertivecz)))));
+                        int horifinal = static_cast<int>(ceil(100 * (horimag / sqrt((horivecx * horivecx) + (horivecy * horivecy) + (horivecz * horivecz)))));
+                        //cout << endl << " " << vertimag << endl;
+                       //cout << " " << horimag;
+                        if(((vertifinal < 100) && (horifinal < 100))){
+        
+        int pixelIndex = (vertifinal * 100 + horifinal) * 3;
+        pixelData[pixelIndex] = 0;      // Red
+        pixelData[pixelIndex + 1] = 0;  // Green
+        pixelData[pixelIndex + 2] = 0;  // Blue
+                        
+                        
+                        }
+                    }
+
+                }
+                cout << endl << "i1" << " " << i1 << endl;
+                // ?minus 1 because line length is the number that was put into the shape array?
+                //iprev = i1;
+
+                if(canter == 0){
+                iprev = i1;
+                }
+                
+                i1 = i1 + ((objectsthatmustbemapped_slider -> pointed_at -> shape_array[i1] -> line_length));
+                canter = canter + 1; 
+            }while(i1 < (objectsthatmustbemapped_slider -> pointed_at -> shape_array_size));
+
+
+
+
+
+            if((objectsthatmustbemapped_slider -> thenext) == nullptr){
+            break;
+            }
+            else{
+            objectsthatmustbemapped_slider = (objectsthatmustbemapped_slider -> thenext);
+            }
+        }
+
+
+
+
+
+
+
 
  file.write(reinterpret_cast<char*>(pixelData.data()), pixelData.size());
  file.close();
@@ -813,9 +1138,9 @@ int main() {
     pthread_t thread;
     line_stuff line1;
     line1.space_info = space1_seeder;
-    line1.xlocation_inspace = 75;
-    line1.ylocation_inspace = 67.5;
-    line1.zlocation_inspace = 66.75;
+    line1.xlocation_inspace = 32;
+    line1.ylocation_inspace = 32;
+    line1.zlocation_inspace = 54;
     line1.xvec = 5.1;
     line1.yvec = 1;
     line1.zvec = 7;
@@ -823,75 +1148,106 @@ int main() {
     pthread_t thread2;
     line_stuff line2;
     line2.space_info = space1_seeder;
-    line2.xlocation_inspace = 5;
-    line2.ylocation_inspace = 5;
-    line2.zlocation_inspace = 15;
+    line2.xlocation_inspace = 33;
+    line2.ylocation_inspace = 40;
+    line2.zlocation_inspace = 32;
     line2.xvec = -2;
     line2.yvec = 6;
     line2.zvec = 8;
 
+    pthread_t thread5;
+    planar_stuff plane2;
+    plane2.space_info = space1_seeder;
+     plane2.xpoint1 = 32;
+     plane2.ypoint1 = 32;
+     plane2.zpoint1 = 38;
+
+     plane2.xpoint2 = 38;
+     plane2.ypoint2 = 32;
+     plane2.zpoint2 = 38;
+
+     plane2.xpoint3 = 35;
+     plane2.ypoint3 = 29;
+     plane2.zpoint3 = 35;
+
+     plane2.additionalplane = new planar_stuff;     
+     plane2.additionalplane -> space_info = space1_seeder;
+     plane2.additionalplane -> xpoint1 = 35;
+     plane2.additionalplane -> ypoint1 = 35;
+     plane2.additionalplane -> zpoint1 = 35;
+
+     plane2.additionalplane -> xpoint2 = 32;
+     plane2.additionalplane -> ypoint2 = 32;
+     plane2.additionalplane -> zpoint2 = 32;
+
+     plane2.additionalplane -> xpoint3 = 38;
+     plane2.additionalplane -> ypoint3 = 32;
+     plane2.additionalplane -> zpoint3 = 32;
+
     pthread_t thread3;
     planar_stuff plane1;
     plane1.space_info = space1_seeder;
-     plane1.xpoint1 = 1;
-     plane1.ypoint1 = 1;
-     plane1.zpoint1 = 1;
+     plane1.xpoint1 = 32;
+     plane1.ypoint1 = 32;
+     plane1.zpoint1 = 38;
 
-     plane1.xpoint2 = 7;
-     plane1.ypoint2 = 8;
-     plane1.zpoint2 = 9;
+     plane1.xpoint2 = 40;
+     plane1.ypoint2 = 40;
+     plane1.zpoint2 = 40;
 
-     plane1.xpoint3 = 2;
-     plane1.ypoint3 = 3;
-     plane1.zpoint3 = 4;
+     plane1.xpoint3 = 20;
+     plane1.ypoint3 = 23;
+     plane1.zpoint3 = 20;
 
 
   
      plane1.additionalplane = new planar_stuff;     
      plane1.additionalplane -> space_info = space1_seeder;
-     plane1.additionalplane -> xpoint1 = 52;
-     plane1.additionalplane -> ypoint1 = 52;
-     plane1.additionalplane -> zpoint1 = 50;
+     plane1.additionalplane -> xpoint1 = 40;
+     plane1.additionalplane -> ypoint1 = 40;
+     plane1.additionalplane -> zpoint1 = 35;
 
-     plane1.additionalplane -> xpoint2 = 80;
-     plane1.additionalplane -> ypoint2 = 60;
-     plane1.additionalplane -> zpoint2 = 70;
+     plane1.additionalplane -> xpoint2 = 32;
+     plane1.additionalplane -> ypoint2 = 32;
+     plane1.additionalplane -> zpoint2 = 32;
 
-     plane1.additionalplane -> xpoint3 = 80;
-     plane1.additionalplane -> ypoint3 = 60;
-     plane1.additionalplane -> zpoint3 = 90;
+     plane1.additionalplane -> xpoint3 = 38;
+     plane1.additionalplane -> ypoint3 = 32;
+     plane1.additionalplane -> zpoint3 = 32;
 
 
     //projection thread stuff
     pthread_t thread4;
     projection_stuff viewpoint1;
     viewpoint1.space_info = space1_seeder;
-    viewpoint1.render_distance_multipliar = 10;
+    viewpoint1.render_distance_multipliar = 20;
 
-    viewpoint1.xpos = 50;
-    viewpoint1.ypos = 50;
-    viewpoint1.zpos = 50;
+    viewpoint1.xpos = 28;
+    viewpoint1.ypos = 28;
+    viewpoint1.zpos = 28;
 
-    viewpoint1.x_base = 45;
-    viewpoint1.y_base = 45;
-    viewpoint1.z_base = 45;
-    viewpoint1.window_length = 15;
-    viewpoint1.window_height = 15;
+    viewpoint1.x_base = 23;
+    viewpoint1.y_base = 23;
+    viewpoint1.z_base = 23;
+    viewpoint1.window_length = 7;
+    viewpoint1.window_height = 7;
 
 
 
 
     
-    pthread_create(&thread, NULL, liner, (void*)&line1);
+    //pthread_create(&thread, NULL, liner, (void*)&line1);
     //pthread_create(&thread2, NULL, liner, (void*)&line2);
     pthread_create(&thread3, NULL, planar, (void*)&plane1);
+    //pthread_create(&thread5, NULL, planar, (void*)&plane2);
     
-    pthread_join(thread, NULL); 
+    //pthread_join(thread, NULL); 
     //pthread_join(thread2, NULL);
     pthread_join(thread3, NULL); 
+    //pthread_join(thread5, NULL);
 
     pthread_create(&thread4, NULL, projection_thread, (void*)&viewpoint1);
-   pthread_join(thread4, NULL);  
+    pthread_join(thread4, NULL);  
 
 //projection_thread(&viewpoint1);
 
